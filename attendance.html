@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Attendance — Smart Classroom</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="static/css/style.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body class="app-body">
+
+<!-- ── Sidebar ── -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">🎓</div>
+    <div class="logo-text"><span class="logo-title">Smart Classroom<br/>Monitoring System</span></div>
+  </div>
+  <nav class="sidebar-nav">
+    <a href="dashboard.html"          class="nav-item"><span class="nav-icon">🏠</span><span>DASHBOARD</span></a>
+    <a href="live.html"    class="nav-item"><span class="nav-icon">📹</span><span>LIVE MONITORING</span></a>
+    <a href="students.html"           class="nav-item"><span class="nav-icon">👥</span><span>STUDENTS</span></a>
+    <a href="attendance.html"         class="nav-item active"><span class="nav-icon">📅</span><span>ATTENDANCE</span></a>
+    <a href="attention_emotions.html" class="nav-item"><span class="nav-icon">🧠</span><span>ATTENTION & EMOTIONS</span></a>
+    <a href="mobile_detection.html"   class="nav-item"><span class="nav-icon">📱</span><span>MOBILE DETECTION</span></a>
+    <a href="distraction_score.html"  class="nav-item"><span class="nav-icon">🎯</span><span>DISTRACTION SCORE</span></a>
+    <a href="analytics.html"          class="nav-item"><span class="nav-icon">📊</span><span>ANALYTICS</span></a>
+    <a href="reports.html"            class="nav-item"><span class="nav-icon">📋</span><span>REPORTS</span></a>
+    <a href="settings.html"           class="nav-item"><span class="nav-icon">⚙️</span><span>SETTINGS</span></a>
+  </nav>
+
+  <!-- Sidebar Date/Time Card -->
+  <div class="sidebar-datetime">
+    <div class="sidebar-date" id="sidebarDate">📅 -- --- ----</div>
+    <div class="sidebar-time" id="sidebarTime">00:00:00 AM</div>
+  </div>
+
+  <a href="index.html" class="sidebar-logout"><span>🚪</span> LOGOUT</a>
+</aside>
+
+<!-- ── Main Content ── -->
+<main class="main-content">
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+      <span style="font-size: .85rem; font-weight: 600; color: var(--text-2);">Smart Classroom Monitoring</span>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-time" id="topbarTime"></div>
+      <div class="topbar-user" style="border-left: 1px solid var(--border); padding-left: 12px; margin-left: 8px;">
+        <div class="user-avatar" style="width:28px; height:28px; font-size:.78rem;">T</div>
+        <span>Teacher</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Page Header & Filter Controls Row -->
+  <div style="margin: 20px 24px 8px; display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+    <div>
+      <h1 style="font-size: 1.35rem; font-weight: 800; color: var(--text); letter-spacing: -0.5px;">Attendance</h1>
+      <div style="font-size: .82rem; color: var(--text-muted); margin-top: 3px;">Track and manage student attendance</div>
+    </div>
+    <div style="display: flex; gap: 10px; align-items: center;">
+      <input type="date" id="attendanceDate" class="search-input" style="width: 140px; padding: 6px 12px; font-size: .8rem;" onchange="loadAttendance()"/>
+      <select id="classSelect" class="setting-select" style="padding: 6px 12px; font-size: .8rem;">
+        <option value="AI & DS - A">AI & DS - A</option>
+        <option value="AI & DS - B">AI & DS - B</option>
+      </select>
+      <button class="btn-action-primary" style="padding: 8px 16px; font-size: .8rem;" onclick="exportAttendance()">Export</button>
+    </div>
+  </div>
+
+  <!-- Top KPI Cards -->
+  <section class="stat-cards" style="padding-top:10px">
+    <div class="stat-card card-blue">
+      <div class="stat-icon-wrap" style="background: rgba(37,99,235,0.1); color: #2563eb;">👥</div>
+      <div class="stat-info">
+        <div class="stat-value">25</div>
+        <div class="stat-label">Total Students</div>
+        <div class="stat-trend" style="color: #64748b;">In Class</div>
+      </div>
+    </div>
+    <div class="stat-card card-green">
+      <div class="stat-icon-wrap" style="background: rgba(16,185,129,0.1); color: #10b981;">✅</div>
+      <div class="stat-info">
+        <div class="stat-value" id="valPresent">20</div>
+        <div class="stat-label">Present Today</div>
+        <div class="stat-trend" style="color: #10b981;">80%</div>
+      </div>
+    </div>
+    <div class="stat-card card-red">
+      <div class="stat-icon-wrap" style="background: rgba(239,68,68,0.1); color: #ef4444;">❌</div>
+      <div class="stat-info">
+        <div class="stat-value" id="valAbsent">5</div>
+        <div class="stat-label">Absent Today</div>
+        <div class="stat-trend" style="color: #ef4444;">20%</div>
+      </div>
+    </div>
+    <div class="stat-card card-orange">
+      <div class="stat-icon-wrap" style="background: rgba(245,158,11,0.1); color: #f59e0b;">⏱</div>
+      <div class="stat-info">
+        <div class="stat-value" id="valLate">2</div>
+        <div class="stat-label">Late Arrivals</div>
+        <div class="stat-trend" style="color: #f59e0b;">8%</div>
+      </div>
+    </div>
+    <div class="stat-card card-purple">
+      <div class="stat-icon-wrap" style="background: rgba(139,92,246,0.1); color: #8b5cf6;">📅</div>
+      <div class="stat-info">
+        <div class="stat-value">86%</div>
+        <div class="stat-label">Avg. Attendance</div>
+        <div class="stat-trend" style="color: #8b5cf6;">This Week</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Charts & Monthly Overview Row -->
+  <div class="panels-row">
+    <!-- Doughnut Summary Chart -->
+    <div class="panel" style="flex: 1; min-width: 250px;">
+      <div class="panel-header"><div class="panel-title">Attendance Summary</div></div>
+      <div class="donut-wrap" style="padding: 16px 0 8px;">
+        <canvas id="attSummaryDonut" width="150" height="150"></canvas>
+        <div class="donut-center">
+          <div class="donut-pct" style="font-size: 1.6rem; color: #10b981;" id="donutAttPct">80%</div>
+          <div class="donut-lbl">Present</div>
+        </div>
+      </div>
+      <div class="donut-legend">
+        <div class="legend-item"><span class="dot dot-green"></span>Present (<strong id="legPresent">20</strong>)</div>
+        <div class="legend-item"><span class="dot dot-red"></span>Absent (<strong id="legAbsent">5</strong>)</div>
+        <div class="legend-item"><span class="dot dot-orange"></span>Late (<strong id="legLate">2</strong>)</div>
+      </div>
+    </div>
+
+    <!-- Line Trend Chart -->
+    <div class="panel" style="flex: 1.8; min-width: 320px;">
+      <div class="panel-header"><div class="panel-title">Attendance Trend (This Week)</div></div>
+      <div style="padding: 16px; height: 210px;">
+        <canvas id="attTrendChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Monthly Overview panel -->
+    <div class="panel" style="flex: 1; min-width: 250px;">
+      <div class="panel-header"><div class="panel-title">Monthly Overview (May 2025)</div></div>
+      <div style="padding: 16px 18px; display: flex; flex-direction: column; gap: 12px;">
+        <div class="summary-row"><span>Total Working Days</span><strong>22</strong></div>
+        <div class="summary-row"><span>Days Present</span><strong>18</strong></div>
+        <div class="summary-row"><span>Days Absent</span><strong>4</strong></div>
+        <div class="summary-row" style="border-top: 1px solid var(--border); padding-top: 12px; margin-top: 4px;">
+          <span>Overall Attendance</span>
+          <strong style="color: #10b981; font-size: 1.1rem;">86%</strong>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Attendance List Table -->
+  <div class="panel" style="margin: 0 24px 20px;">
+    <div class="panel-header">
+      <div class="panel-title">Attendance List</div>
+    </div>
+    <div style="overflow-x: auto;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Photo</th>
+            <th>Name</th>
+            <th>Class</th>
+            <th>Status</th>
+            <th>Check In Time</th>
+            <th>Check Out Time</th>
+            <th>Duration</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="attendanceTableBody">
+          <!-- Populated dynamically -->
+        </tbody>
+      </table>
+    </div>
+    <!-- Pagination footer -->
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; border-top: 1px solid var(--border); font-size: .82rem; color: var(--text-muted);">
+      <div>Showing 1 to 8 of 25 students</div>
+      <div style="display: flex; gap: 5px;">
+        <button class="btn-sm" style="font-weight: 700;">1</button>
+        <button class="btn-sm">2</button>
+        <button class="btn-sm">3</button>
+        <button class="btn-sm">&gt;</button>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script src="static/js/dashboard.js"></script>
+<script>
+  // Set default date to today
+  document.getElementById('attendanceDate').valueAsDate = new Date();
+
+  let summaryDonut = null;
+  let trendChart = null;
+
+  // Initialize charts
+  function initCharts() {
+    summaryDonut = new Chart(document.getElementById('attSummaryDonut'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Present', 'Absent', 'Late'],
+        datasets: [{
+          data: [20, 5, 2],
+          backgroundColor: ['#10b981', '#ef4444', '#f59e0b'],
+          borderWidth: 0
+        }]
+      },
+      options: { cutout: '68%', plugins: { legend: { display: false } } }
+    });
+
+    trendChart = new Chart(document.getElementById('attTrendChart'), {
+      type: 'line',
+      data: {
+        labels: ['18 May', '19 May', '20 May', '21 May', '22 May', '23 May', '24 May'],
+        datasets: [{
+          label: 'Attendance %',
+          data: [82, 85, 80, 90, 88, 84, 80],
+          borderColor: '#10b981',
+          backgroundColor: 'rgba(16,185,129,0.06)',
+          fill: true,
+          tension: 0.35,
+          pointRadius: 3
+        }]
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { min: 0, max: 100, grid: { color: '#e8ecf4' } },
+          x: { grid: { color: '#e8ecf4' } }
+        }
+      }
+    });
+  }
+
+  async function loadAttendance() {
+    const selDate = document.getElementById('attendanceDate').value;
+    const res = await fetch(`/api/db-attendance?date=${selDate}`);
+    const data = await res.json();
+    
+    let present = 0, absent = 0, late = 0;
+    
+    const tbody = document.getElementById('attendanceTableBody');
+    if (!data || data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:24px">No attendance records for this date</td></tr>';
+      return;
+    }
+    
+    tbody.innerHTML = data.map(r => {
+      let stCls = 'status-good';
+      if (r.status === 'Absent') {
+        stCls = 'status-bad';
+        absent++;
+      } else if (r.status === 'Late') {
+        stCls = 'status-warn';
+        late++;
+      } else {
+        present++;
+      }
+      return `<tr>
+        <td><strong>${r.student_id}</strong></td>
+        <td><div class="user-avatar" style="width:30px; height:30px; font-size:.78rem;">${r.name[0]}</div></td>
+        <td><strong>${r.name}</strong></td>
+        <td>${r.class}</td>
+        <td><span class="status-badge ${stCls}">${r.status}</span></td>
+        <td style="font-family:monospace;">${r.check_in || '--'}</td>
+        <td style="font-family:monospace;">${r.check_out || '--'}</td>
+        <td>${r.duration || '--'}</td>
+        <td>
+          <button class="btn-sm" style="color:var(--accent); border-color:rgba(108,58,237,0.15)">👁</button>
+        </td>
+      </tr>`;
+    }).join('');
+
+    // Update KPI UI
+    document.getElementById('valPresent').textContent = present;
+    document.getElementById('valAbsent').textContent = absent;
+    document.getElementById('valLate').textContent = late;
+    
+    document.getElementById('legPresent').textContent = present;
+    document.getElementById('legAbsent').textContent = absent;
+    document.getElementById('legLate').textContent = late;
+
+    const total = present + absent + late || 1;
+    const presentPct = Math.round((present / total) * 100);
+    document.getElementById('donutAttPct').textContent = presentPct + '%';
+    
+    // Update chart
+    if (summaryDonut) {
+      summaryDonut.data.datasets[0].data = [present, absent, late];
+      summaryDonut.update();
+    }
+  }
+
+  function exportAttendance() {
+    const selDate = document.getElementById('attendanceDate').value;
+    window.open(`/api/db-attendance?date=${selDate}`);
+  }
+
+  window.addEventListener('load', () => {
+    initCharts();
+    loadAttendance();
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Mobile Detection — Smart Classroom</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="static/css/style.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    /* Modal styles */
+    .modal {
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center;
+    }
+    .modal-content {
+      background: white; border-radius: 12px; padding: 24px; width: 500px;
+      box-shadow: var(--shadow-md); display: flex; flex-direction: column; gap: 14px;
+    }
+    .modal-header { font-size: 1.1rem; font-weight: 700; color: var(--text); border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+  </style>
+</head>
+<body class="app-body">
+
+<!-- ── Sidebar ── -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">🎓</div>
+    <div class="logo-text"><span class="logo-title">Smart Classroom<br/>Monitoring System</span></div>
+  </div>
+  <nav class="sidebar-nav">
+    <a href="dashboard.html"          class="nav-item"><span class="nav-icon">🏠</span><span>DASHBOARD</span></a>
+    <a href="live.html"    class="nav-item"><span class="nav-icon">📹</span><span>LIVE MONITORING</span></a>
+    <a href="students.html"           class="nav-item"><span class="nav-icon">👥</span><span>STUDENTS</span></a>
+    <a href="attendance.html"         class="nav-item"><span class="nav-icon">📅</span><span>ATTENDANCE</span></a>
+    <a href="attention_emotions.html" class="nav-item"><span class="nav-icon">🧠</span><span>ATTENTION & EMOTIONS</span></a>
+    <a href="mobile_detection.html"   class="nav-item active"><span class="nav-icon">📱</span><span>MOBILE DETECTION</span></a>
+    <a href="distraction_score.html"  class="nav-item"><span class="nav-icon">🎯</span><span>DISTRACTION SCORE</span></a>
+    <a href="analytics.html"          class="nav-item"><span class="nav-icon">📊</span><span>ANALYTICS</span></a>
+    <a href="reports.html"            class="nav-item"><span class="nav-icon">📋</span><span>REPORTS</span></a>
+    <a href="settings.html"           class="nav-item"><span class="nav-icon">⚙️</span><span>SETTINGS</span></a>
+  </nav>
+
+  <!-- Sidebar Date/Time Card -->
+  <div class="sidebar-datetime">
+    <div class="sidebar-date" id="sidebarDate">📅 -- --- ----</div>
+    <div class="sidebar-time" id="sidebarTime">00:00:00 AM</div>
+  </div>
+
+  <a href="index.html" class="sidebar-logout"><span>🚪</span> LOGOUT</a>
+</aside>
+
+<!-- ── Main Content ── -->
+<main class="main-content">
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+      <span style="font-size: .85rem; font-weight: 600; color: var(--text-2);">Smart Classroom Monitoring</span>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-time" id="topbarTime"></div>
+      <div class="topbar-user" style="border-left: 1px solid var(--border); padding-left: 12px; margin-left: 8px;">
+        <div class="user-avatar" style="width:28px; height:28px; font-size:.78rem;">T</div>
+        <span>Teacher</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Page Header & Filter Controls Row -->
+  <div style="margin: 20px 24px 8px; display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+    <div>
+      <h1 style="font-size: 1.35rem; font-weight: 800; color: var(--text); letter-spacing: -0.5px;">Mobile Detection</h1>
+      <div style="font-size: .82rem; color: var(--text-muted); margin-top: 3px;">Monitor and track mobile phone usage in classroom</div>
+    </div>
+    <div style="display: flex; gap: 10px; align-items: center;">
+      <input type="date" id="detectionDate" class="search-input" style="width: 140px; padding: 6px 12px; font-size: .8rem;" onchange="loadDetections()"/>
+      <select id="classSelect" class="setting-select" style="padding: 6px 12px; font-size: .8rem;">
+        <option value="AI & DS - A">AI & DS - A</option>
+      </select>
+      <button class="btn-action-primary" style="padding: 8px 16px; font-size: .8rem;">Export Report</button>
+    </div>
+  </div>
+
+  <!-- KPI Cards -->
+  <section class="stat-cards" style="padding-top:10px">
+    <div class="stat-card card-red" style="border-left: 4px solid var(--red);">
+      <div class="stat-icon-wrap" style="background: rgba(239,68,68,0.1); color: #ef4444;">📱</div>
+      <div class="stat-info">
+        <div class="stat-value" id="kpiDetections">8</div>
+        <div class="stat-label">Total Detections Today</div>
+        <div class="stat-trend" style="color: #ef4444;">+2 from yesterday ↗</div>
+      </div>
+    </div>
+    <div class="stat-card card-orange">
+      <div class="stat-icon-wrap" style="background: rgba(245,158,11,0.1); color: #f59e0b;">👥</div>
+      <div class="stat-info">
+        <div class="stat-value" id="kpiInvolved">5</div>
+        <div class="stat-label">Students Involved</div>
+        <div class="stat-trend" style="color: #ef4444;">+1 from yesterday ↗</div>
+      </div>
+    </div>
+    <div class="stat-card card-blue">
+      <div class="stat-icon-wrap" style="background: rgba(37,99,235,0.1); color: #2563eb;">⏱</div>
+      <div class="stat-info">
+        <div class="stat-value">0.32</div>
+        <div class="stat-label">Avg. Detections / Class</div>
+        <div class="stat-trend" style="color: #64748b;">Per 45 min</div>
+      </div>
+    </div>
+    <div class="stat-card card-green">
+      <div class="stat-icon-wrap" style="background: rgba(16,185,129,0.1); color: #10b981;">✅</div>
+      <div class="stat-info">
+        <div class="stat-value">20</div>
+        <div class="stat-label">Students Without Mobile</div>
+        <div class="stat-trend" style="color: #10b981;">80% of class</div>
+      </div>
+    </div>
+    <div class="stat-card card-purple">
+      <div class="stat-icon-wrap" style="background: rgba(139,92,246,0.1); color: #8b5cf6;">🏆</div>
+      <div class="stat-info">
+        <div class="stat-value" style="font-size: 1.15rem; font-weight: 800; padding: 6px 0;">Priya Sharma (3)</div>
+        <div class="stat-label">Most Detections By</div>
+        <div class="stat-trend" style="color: #8b5cf6;">Today</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Row 2: Live Feed & Chart -->
+  <div class="panels-row">
+    <!-- Camera Feed -->
+    <div class="panel" style="flex: 2; min-width: 320px;">
+      <div class="panel-header">
+        <div class="panel-title">
+          <div class="live-dot active"></div>
+          Live Detection (Camera 1)
+        </div>
+        <button class="btn-sm btn-refresh">📹 Change Camera</button>
+      </div>
+      <div class="feed-container" style="min-height: 290px; background: #000; position: relative;">
+        <!-- Live Badge -->
+        <div style="position: absolute; top: 12px; left: 12px; z-index: 5;">
+          <span class="badge-live">● LIVE</span>
+        </div>
+        <img src="/video_feed" class="video-feed" style="max-height: 340px; width: 100%; object-fit: contain;" alt="Mobile detection stream"/>
+      </div>
+      <div class="feed-footer" style="background: var(--surface);">
+        <span>Status: <strong style="color: var(--green);">Detection is running</strong></span>
+        <span>FPS: <strong>24</strong></span>
+        <span>Time: <strong id="curTime">--:--:--</strong></span>
+      </div>
+    </div>
+
+    <!-- Right charts -->
+    <div class="panels-col" style="flex: 1.2;">
+      <!-- Line Chart -->
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">Detections Over Time (Today)</div></div>
+        <div style="padding: 16px; height: 160px;">
+          <canvas id="detTimeChart"></canvas>
+        </div>
+      </div>
+      <!-- Bar Chart -->
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">Detections by Students (Today)</div></div>
+        <div style="padding: 16px; height: 160px;">
+          <canvas id="detStudentChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 3: Events Table & Location/Alerts -->
+  <div class="panels-row">
+    <!-- Events list -->
+    <div class="panel" style="flex: 2; min-width: 320px;">
+      <div class="panel-header"><div class="panel-title">Recent Mobile Detection Events</div></div>
+      <div style="overflow-x: auto; max-height: 310px;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Student ID</th>
+              <th>Student Name</th>
+              <th>Class</th>
+              <th>Camera</th>
+              <th>Status</th>
+              <th>Snapshot</th>
+            </tr>
+          </thead>
+          <tbody id="phoneEventTableBody">
+            <!-- Populated via API -->
+          </tbody>
+        </table>
+      </div>
+      <div style="padding: 12px; text-align: center; border-top: 1px solid var(--border);">
+        <a href="javascript:void(0)" onclick="showAllEvents()" style="color: var(--accent); font-size: .82rem; font-weight: 700;">View All Events →</a>
+      </div>
+    </div>
+
+    <!-- Right location & alerts -->
+    <div class="panels-col" style="flex: 1;">
+      <!-- Location Donut -->
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">Detections by Location (Today)</div></div>
+        <div class="donut-wrap" style="padding: 12px 0 6px;">
+          <canvas id="locDonut" width="120" height="120"></canvas>
+          <div class="donut-center">
+            <div class="donut-pct" style="font-size: 1.3rem; color: #2563eb;">75%</div>
+            <div class="donut-lbl">Camera 1</div>
+          </div>
+        </div>
+        <div class="donut-legend" style="padding-bottom: 8px;">
+          <div class="legend-item"><span class="dot dot-blue"></span>Camera 1 (<strong id="locCam1">75%</strong>)</div>
+          <div class="legend-item"><span class="dot dot-purple"></span>Camera 2 (<strong id="locCam2">25%</strong>)</div>
+        </div>
+      </div>
+
+      <!-- Alerts List -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">Alerts</div>
+          <a href="javascript:void(0)" onclick="showAllAlerts()" style="font-size: .82rem; color: var(--accent); font-weight: 700;">View All Alerts →</a>
+        </div>
+        <ul class="alert-list" id="phoneAlertList" style="max-height: 140px;">
+          <!-- Populated dynamically -->
+        </ul>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- View All Events Modal -->
+<div class="modal" id="allEventsModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; justify-content:center; align-items:center;">
+  <div class="modal-content" style="background:white; border-radius:12px; padding:24px; width:650px; max-height:80%; overflow-y:auto; box-shadow:var(--shadow-md); display:flex; flex-direction:column; gap:14px;">
+    <div class="modal-header" style="font-size:1.15rem; font-weight:700; border-bottom:1px solid var(--border); padding-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+      <span>📱 All Mobile Detection Events (Today)</span>
+      <button onclick="closeAllEventsModal()" style="background:none; border:none; font-size:1.2rem; cursor:pointer; color:var(--text-muted);">✕</button>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Student ID</th>
+            <th>Name</th>
+            <th>Class</th>
+            <th>Camera</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="allEventsTableBody">
+          <!-- Populated dynamically -->
+        </tbody>
+      </table>
+    </div>
+    <div style="display:flex; justify-content:flex-end;">
+      <button class="btn-action-primary" onclick="closeAllEventsModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- View All Alerts Modal -->
+<div class="modal" id="allAlertsModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; justify-content:center; align-items:center;">
+  <div class="modal-content" style="background:white; border-radius:12px; padding:24px; width:450px; max-height:80%; overflow-y:auto; box-shadow:var(--shadow-md); display:flex; flex-direction:column; gap:14px;">
+    <div class="modal-header" style="font-size:1.15rem; font-weight:700; border-bottom:1px solid var(--border); padding-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+      <span>🚨 Recent System Alerts (Last 50)</span>
+      <button onclick="closeAllAlertsModal()" style="background:none; border:none; font-size:1.2rem; cursor:pointer; color:var(--text-muted);">✕</button>
+    </div>
+    <ul class="alert-list" id="allAlertsListBody" style="display:flex; flex-direction:column; gap:8px; padding:0; list-style:none;">
+      <!-- Populated dynamically -->
+    </ul>
+    <div style="display:flex; justify-content:flex-end;">
+      <button class="btn-action-primary" onclick="closeAllAlertsModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+
+<script src="static/js/dashboard.js"></script>
+<script>
+  document.getElementById('detectionDate').valueAsDate = new Date();
+
+  let detTimeChart = null;
+  let detStudentChart = null;
+  let locDonut = null;
+
+  function initCharts() {
+    detTimeChart = new Chart(document.getElementById('detTimeChart'), {
+      type: 'line',
+      data: {
+        labels: ['09:00', '10:00', '11:00', '12:00', '01:00', '02:00', '03:00', '04:00'],
+        datasets: [{
+          data: [1, 2, 3, 3, 4, 6, 7, 8],
+          borderColor: '#ef4444',
+          backgroundColor: 'rgba(239,68,68,0.06)',
+          fill: true,
+          tension: 0.35,
+          pointRadius: 2
+        }]
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { min: 0, max: 10, grid: { color: '#e8ecf4' } },
+          x: { grid: { color: '#e8ecf4' } }
+        }
+      }
+    });
+
+    detStudentChart = new Chart(document.getElementById('detStudentChart'), {
+      type: 'bar',
+      data: {
+        labels: ['Priya Sharma', 'Arjun Singh', 'Kavya Nair', 'Manoj Patel', 'Ramesh Kumar'],
+        datasets: [{
+          data: [3, 2, 1, 1, 1],
+          backgroundColor: ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444']
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { min: 0, max: 5, grid: { color: '#e8ecf4' } },
+          y: { grid: { display: false } }
+        }
+      }
+    });
+
+    locDonut = new Chart(document.getElementById('locDonut'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Camera 1', 'Camera 2'],
+        datasets: [{
+          data: [6, 2],
+          backgroundColor: ['#2563eb', '#8b5cf6'],
+          borderWidth: 0
+        }]
+      },
+      options: { cutout: '65%', plugins: { legend: { display: false } } }
+    });
+  }
+
+  async function loadDetections() {
+    const selDate = document.getElementById('detectionDate').value;
+    const res = await fetch(`/api/db-mobile-detections?date=${selDate}`);
+    const data = await res.json();
+
+    const tbody = document.getElementById('phoneEventTableBody');
+    if (!data || data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:24px">No phone detections for this date</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = data.map(r => {
+      return `<tr>
+        <td style="font-family:monospace;">${r.time}</td>
+        <td><strong>${r.student_id}</strong></td>
+        <td><strong>${r.name}</strong></td>
+        <td>${r.class}</td>
+        <td>${r.camera}</td>
+        <td><span style="color:var(--red); font-weight:700;">📱 Mobile Detected</span></td>
+        <td><div style="font-size:1.15rem; cursor:pointer;">📸</div></td>
+      </tr>`;
+    }).join('');
+
+    // Update KPI count
+    document.getElementById('kpiDetections').textContent = data.length;
+    
+    // Get unique students count
+    const uniqueStudents = new Set(data.map(r => r.student_id)).size;
+    document.getElementById('kpiInvolved').textContent = uniqueStudents;
+  }
+
+  async function loadAlertList() {
+    const res = await fetch('/api/db-alerts?limit=5');
+    const data = await res.json();
+    const alertList = document.getElementById('phoneAlertList');
+    
+    const phoneAlerts = data.filter(a => a.type === 'mobile');
+    if (phoneAlerts.length === 0) {
+      alertList.innerHTML = '<li class="alert-empty">No alerts today</li>';
+      return;
+    }
+    
+    alertList.innerHTML = phoneAlerts.map(a => `
+      <li class="alert-sleep" style="margin-bottom:6px; font-size:.8rem;">
+        🚨 ${a.message} <span style="float:right; font-size:.7rem; color:var(--text-muted);">${a.timestamp}</span>
+      </li>
+    `).join('');
+  }
+
+  // Update clock/time
+  setInterval(() => {
+    const d = document.getElementById('curTime');
+    if (d) {
+      d.textContent = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+    }
+  }, 1000);
+
+  // Modal handlers (NEW)
+  async function showAllEvents() {
+    const selDate = document.getElementById('detectionDate').value;
+    const res = await fetch(`/api/db-mobile-detections?date=${selDate}`);
+    const data = await res.json();
+    
+    const tbody = document.getElementById('allEventsTableBody');
+    if (!data || data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:24px">No phone detections logged for this date</td></tr>';
+    } else {
+      tbody.innerHTML = data.map(r => `
+        <tr>
+          <td style="font-family:monospace;">${r.time}</td>
+          <td><strong>${r.student_id}</strong></td>
+          <td><strong>${r.name}</strong></td>
+          <td>${r.class}</td>
+          <td>${r.camera}</td>
+          <td><span style="color:var(--red); font-weight:700;">📱 Mobile Detected</span></td>
+        </tr>
+      `).join('');
+    }
+    document.getElementById('allEventsModal').style.display = 'flex';
+  }
+
+  function closeAllEventsModal() {
+    document.getElementById('allEventsModal').style.display = 'none';
+  }
+
+  async function showAllAlerts() {
+    const res = await fetch('/api/db-alerts?limit=50');
+    const data = await res.json();
+    
+    const listBody = document.getElementById('allAlertsListBody');
+    if (!data || data.length === 0) {
+      listBody.innerHTML = '<li class="alert-empty" style="text-align:center;padding:12px;color:var(--text-muted);">No system alerts today</li>';
+    } else {
+      listBody.innerHTML = data.map(a => `
+        <li class="alert-sleep" style="margin-bottom:8px; padding:10px; border-radius:8px; border:1px solid var(--border); font-size:.82rem; background:#fef2f2; border-color:#fca5a5; color:#dc2626;">
+          🚨 <strong>${a.type.toUpperCase()}:</strong> ${a.message} 
+          <span style="float:right; font-size:.72rem; color:var(--text-muted);">${a.timestamp}</span>
+        </li>
+      `).join('');
+    }
+    document.getElementById('allAlertsModal').style.display = 'flex';
+  }
+
+  function closeAllAlertsModal() {
+    document.getElementById('allAlertsModal').style.display = 'none';
+  }
+
+  window.addEventListener('load', () => {
+    initCharts();
+    loadDetections();
+    loadAlertList();
+  });
+</script>
+</body>
+</html>

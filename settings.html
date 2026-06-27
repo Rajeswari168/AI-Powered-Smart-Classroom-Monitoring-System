@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Settings — Smart Classroom Attention Detector</title>
+  <meta name="description" content="System settings for the Smart Classroom Attention Detector."/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="static/css/style.css"/>
+</head>
+<body class="app-body">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">🎓</div>
+      <div class="logo-text">
+        <span class="logo-title">Smart Classroom<br/>Monitoring System</span>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="dashboard.html"          class="nav-item"><span class="nav-icon">🏠</span><span>DASHBOARD</span></a>
+      <a href="live.html"    class="nav-item"><span class="nav-icon">📹</span><span>LIVE MONITORING</span></a>
+      <a href="students.html"           class="nav-item"><span class="nav-icon">👥</span><span>STUDENTS</span></a>
+      <a href="attendance.html"         class="nav-item"><span class="nav-icon">📅</span><span>ATTENDANCE</span></a>
+      <a href="attention_emotions.html" class="nav-item"><span class="nav-icon">🧠</span><span>ATTENTION & EMOTIONS</span></a>
+      <a href="mobile_detection.html"   class="nav-item"><span class="nav-icon">📱</span><span>MOBILE DETECTION</span></a>
+      <a href="distraction_score.html"  class="nav-item"><span class="nav-icon">🎯</span><span>DISTRACTION SCORE</span></a>
+      <a href="analytics.html"          class="nav-item"><span class="nav-icon">📊</span><span>ANALYTICS</span></a>
+      <a href="reports.html"            class="nav-item"><span class="nav-icon">📋</span><span>REPORTS</span></a>
+      <a href="settings.html"           class="nav-item active"><span class="nav-icon">⚙️</span><span>SETTINGS</span></a>
+    </nav>
+
+    <!-- Sidebar Date/Time Card -->
+    <div class="sidebar-datetime">
+      <div class="sidebar-date" id="sidebarDate">📅 -- --- ----</div>
+      <div class="sidebar-time" id="sidebarTime">00:00:00 AM</div>
+    </div>
+
+    <a href="index.html" class="sidebar-logout"><span>🚪</span> LOGOUT</a>
+  </aside>
+
+  <main class="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+        <h1 class="page-title">Settings</h1>
+      </div>
+      <div class="topbar-right">
+        <div class="topbar-time" id="topbarTime"></div>
+        <div class="topbar-user"><div class="user-avatar">T</div><span>Teacher</span></div>
+      </div>
+    </header>
+
+    <div class="settings-grid">
+
+      <!-- Detection Settings -->
+      <div class="panel settings-panel">
+        <div class="panel-header">
+          <div class="panel-title">🎯 Detection Settings</div>
+        </div>
+        <div class="settings-body">
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <div class="setting-label">Camera Index</div>
+              <div class="setting-desc">Select which webcam to use (0 = default)</div>
+            </div>
+            <select class="setting-select" id="cameraIndex">
+              <option value="0" selected>Camera 0 (Default)</option>
+              <option value="1">Camera 1</option>
+              <option value="2">Camera 2</option>
+            </select>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <div class="setting-label">EAR Threshold</div>
+              <div class="setting-desc">Eye Aspect Ratio below this = eyes closed</div>
+            </div>
+            <div class="setting-slider-wrap">
+              <input type="range" min="0.10" max="0.40" step="0.01" value="0.25"
+                     class="setting-slider" id="earThresh"
+                     oninput="document.getElementById('earVal').textContent=this.value"/>
+              <span class="slider-val" id="earVal">0.25</span>
+            </div>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <div class="setting-label">Drowsy Frame Count</div>
+              <div class="setting-desc">Consecutive closed-eye frames before alert</div>
+            </div>
+            <div class="setting-slider-wrap">
+              <input type="range" min="5" max="60" step="1" value="20"
+                     class="setting-slider" id="drowsyFrames"
+                     oninput="document.getElementById('drowsyVal').textContent=this.value"/>
+              <span class="slider-val" id="drowsyVal">20</span>
+            </div>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <div class="setting-label">Attention Window (frames)</div>
+              <div class="setting-desc">Rolling window size for attention % calculation</div>
+            </div>
+            <div class="setting-slider-wrap">
+              <input type="range" min="20" max="200" step="10" value="100"
+                     class="setting-slider" id="attWindow"
+                     oninput="document.getElementById('attWindowVal').textContent=this.value"/>
+              <span class="slider-val" id="attWindowVal">100</span>
+            </div>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <div class="setting-label">JPEG Quality</div>
+              <div class="setting-desc">Video stream quality (lower = faster)</div>
+            </div>
+            <div class="setting-slider-wrap">
+              <input type="range" min="30" max="100" step="5" value="80"
+                     class="setting-slider" id="jpegQual"
+                     oninput="document.getElementById('jpegVal').textContent=this.value+'%'"/>
+              <span class="slider-val" id="jpegVal">80%</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Notification Settings -->
+      <div class="panel settings-panel">
+        <div class="panel-header">
+          <div class="panel-title">🔔 Notifications & Alerts</div>
+        </div>
+        <div class="settings-body">
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <div class="setting-label">Drowsiness Alert</div>
+              <div class="setting-desc">Show banner when a student falls asleep</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggleDrowsy" checked/>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <div class="setting-label">Sound Alert</div>
+              <div class="setting-desc">Play a beep when drowsiness is detected</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggleSound"/>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <div class="setting-label">Auto-log History</div>
+              <div class="setting-desc">Save session data every second automatically</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggleLog" checked/>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <div class="setting-label">Multi-face Detection</div>
+              <div class="setting-desc">Track multiple students simultaneously</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggleMultiFace" checked/>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <div class="setting-label">Emotion Detection</div>
+              <div class="setting-desc">Enable DeepFace emotion analysis (uses more CPU)</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggleEmotion" checked/>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Account Settings -->
+      <div class="panel settings-panel">
+        <div class="panel-header">
+          <div class="panel-title">👤 Account Settings</div>
+        </div>
+        <div class="settings-body">
+
+          <div class="setting-item" style="flex-direction:column;align-items:flex-start;gap:6px">
+            <div class="setting-label">Display Name</div>
+            <input type="text" class="setting-input" value="Teacher" id="displayName"/>
+          </div>
+
+          <div class="setting-item" style="flex-direction:column;align-items:flex-start;gap:6px">
+            <div class="setting-label">Username</div>
+            <input type="text" class="setting-input" value="teacher" id="uname" readonly/>
+          </div>
+
+          <div class="setting-item" style="flex-direction:column;align-items:flex-start;gap:6px">
+            <div class="setting-label">New Password</div>
+            <input type="password" class="setting-input" placeholder="Leave blank to keep current" id="newPw"/>
+          </div>
+
+          <div class="setting-item" style="flex-direction:column;align-items:flex-start;gap:6px">
+            <div class="setting-label">School / Institution Name</div>
+            <input type="text" class="setting-input" value="AI College of Technology" id="schoolName"/>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Session Management -->
+      <div class="panel settings-panel">
+        <div class="panel-header">
+          <div class="panel-title">🗂️ Session Management</div>
+        </div>
+        <div class="settings-body">
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <div class="setting-label">Clear Session History</div>
+              <div class="setting-desc">Delete all recorded attention history data</div>
+            </div>
+            <button class="btn-danger" onclick="clearHistory()">🗑 Clear</button>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <div class="setting-label">Reset Detection Counters</div>
+              <div class="setting-desc">Reset frame counts and attention percentage</div>
+            </div>
+            <button class="btn-danger" onclick="resetCounters()">↺ Reset</button>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <div class="setting-label">Export All Data</div>
+              <div class="setting-desc">Download full session CSV</div>
+            </div>
+            <button class="btn-sm btn-refresh" onclick="exportAll()">⬇ Export</button>
+          </div>
+
+          <!-- System info -->
+          <div class="sys-info-box" id="sysInfo">
+            <div class="sys-row"><span>Total Frames Processed</span><strong id="siFrames">--</strong></div>
+            <div class="sys-row"><span>Session Started</span><strong id="siStart">--</strong></div>
+            <div class="sys-row"><span>History Records</span><strong id="siRecords">--</strong></div>
+          </div>
+
+        </div>
+      </div>
+
+    </div><!-- /settings-grid -->
+
+    <!-- Save button -->
+    <div style="padding:0 24px 24px;display:flex;gap:12px;justify-content:flex-end">
+      <button class="btn-sm btn-refresh" onclick="resetToDefault()">↺ Reset to Default</button>
+      <button class="btn-start" onclick="saveSettings()" style="padding:10px 28px">💾 Save Settings</button>
+    </div>
+
+    <!-- Toast notification -->
+    <div id="toast" class="toast" style="display:none"></div>
+
+  </main>
+
+  <script src="static/js/dashboard.js"></script>
+  <script>
+    // Load system info
+    function loadSysInfo() {
+      fetch('/api/stats').then(r=>r.json()).then(s=>{
+        document.getElementById('siFrames').textContent = s.total_frames || 0;
+        document.getElementById('siStart').textContent  = s.session_start || '--';
+      }).catch(()=>{});
+      fetch('/api/history').then(r=>r.json()).then(h=>{
+        document.getElementById('siRecords').textContent = h.length;
+      }).catch(()=>{});
+    }
+
+    function showToast(msg, type='success') {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = 'toast toast-' + type;
+      t.style.display = 'block';
+      setTimeout(() => { t.style.display='none'; }, 3000);
+    }
+
+    function saveSettings() {
+      // Save to localStorage for persistence
+      localStorage.setItem('scad_settings', JSON.stringify({
+        earThresh:    document.getElementById('earThresh').value,
+        drowsyFrames: document.getElementById('drowsyFrames').value,
+        attWindow:    document.getElementById('attWindow').value,
+        jpegQual:     document.getElementById('jpegQual').value,
+        displayName:  document.getElementById('displayName').value,
+        schoolName:   document.getElementById('schoolName').value,
+        toggleDrowsy: document.getElementById('toggleDrowsy').checked,
+        toggleSound:  document.getElementById('toggleSound').checked,
+        toggleLog:    document.getElementById('toggleLog').checked,
+        toggleEmotion:document.getElementById('toggleEmotion').checked,
+      }));
+      showToast('✅ Settings saved successfully!');
+    }
+
+    function resetToDefault() {
+      document.getElementById('earThresh').value      = 0.25;
+      document.getElementById('earVal').textContent   = '0.25';
+      document.getElementById('drowsyFrames').value   = 20;
+      document.getElementById('drowsyVal').textContent= '20';
+      document.getElementById('attWindow').value      = 100;
+      document.getElementById('attWindowVal').textContent = '100';
+      document.getElementById('jpegQual').value       = 80;
+      document.getElementById('jpegVal').textContent  = '80%';
+      showToast('Settings reset to defaults', 'info');
+    }
+
+    async function clearHistory() {
+      if (!confirm('Clear all session history? This cannot be undone.')) return;
+      await fetch('/api/reset', {method:'POST'});
+      showToast('🗑 History cleared!');
+      loadSysInfo();
+    }
+
+    async function resetCounters() {
+      await fetch('/api/reset', {method:'POST'});
+      showToast('↺ Counters reset!');
+      loadSysInfo();
+    }
+
+    function exportAll() {
+      fetch('/api/history').then(r=>r.json()).then(data=>{
+        const rows = [['Timestamp','Faces','Attention %'],...data.map(r=>[r.timestamp,r.face_count,r.attention_pct])];
+        const csv  = rows.map(r=>r.join(',')).join('\n');
+        const a    = document.createElement('a');
+        a.href     = 'data:text/csv,'+encodeURIComponent(csv);
+        a.download = 'session_export.csv';
+        a.click();
+      });
+    }
+
+    // Load saved settings
+    const saved = JSON.parse(localStorage.getItem('scad_settings') || '{}');
+    if (saved.earThresh)    { document.getElementById('earThresh').value    = saved.earThresh;    document.getElementById('earVal').textContent=saved.earThresh; }
+    if (saved.drowsyFrames) { document.getElementById('drowsyFrames').value = saved.drowsyFrames; document.getElementById('drowsyVal').textContent=saved.drowsyFrames; }
+    if (saved.displayName)  document.getElementById('displayName').value  = saved.displayName;
+    if (saved.schoolName)   document.getElementById('schoolName').value   = saved.schoolName;
+
+    loadSysInfo();
+    setInterval(loadSysInfo, 5000);
+  </script>
+</body>
+</html>
