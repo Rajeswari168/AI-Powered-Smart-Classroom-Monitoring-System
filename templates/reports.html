@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Reports — Smart Classroom Attention Detector</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
+</head>
+<body class="app-body">
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">🎓</div>
+    <div class="logo-text">
+      <span class="logo-title">Smart Classroom<br/>Monitoring System</span>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <a href="/dashboard"          class="nav-item"><span class="nav-icon">🏠</span><span>DASHBOARD</span></a>
+    <a href="/live-monitoring"    class="nav-item"><span class="nav-icon">📹</span><span>LIVE MONITORING</span></a>
+    <a href="/students"           class="nav-item"><span class="nav-icon">👥</span><span>STUDENTS</span></a>
+    <a href="/attendance"         class="nav-item"><span class="nav-icon">📅</span><span>ATTENDANCE</span></a>
+    <a href="/attention-emotions" class="nav-item"><span class="nav-icon">🧠</span><span>ATTENTION & EMOTIONS</span></a>
+    <a href="/mobile-detection"   class="nav-item"><span class="nav-icon">📱</span><span>MOBILE DETECTION</span></a>
+    <a href="/distraction-score"  class="nav-item"><span class="nav-icon">🎯</span><span>DISTRACTION SCORE</span></a>
+    <a href="/analytics"          class="nav-item"><span class="nav-icon">📊</span><span>ANALYTICS</span></a>
+    <a href="/reports"            class="nav-item active"><span class="nav-icon">📋</span><span>REPORTS</span></a>
+    <a href="/settings"           class="nav-item"><span class="nav-icon">⚙️</span><span>SETTINGS</span></a>
+  </nav>
+
+  <!-- Sidebar Date/Time Card -->
+  <div class="sidebar-datetime">
+    <div class="sidebar-date" id="sidebarDate">📅 -- --- ----</div>
+    <div class="sidebar-time" id="sidebarTime">00:00:00 AM</div>
+  </div>
+
+  <a href="/logout" class="sidebar-logout"><span>🚪</span> LOGOUT</a>
+</aside>
+<main class="main-content">
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+      <h1 class="page-title">Reports</h1>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-time" id="topbarTime"></div>
+      <div class="topbar-user"><div class="user-avatar">T</div><span>Teacher</span></div>
+    </div>
+  </header>
+
+  <!-- Summary cards -->
+  <section class="stat-cards" style="padding-top:20px">
+    <div class="stat-card card-blue">
+      <div class="stat-icon-wrap">🎯</div>
+      <div class="stat-info">
+        <div class="stat-value" id="rAvgAtt">--</div>
+        <div class="stat-label">Session Avg Attention</div>
+      </div>
+    </div>
+    <div class="stat-card card-green">
+      <div class="stat-icon-wrap">✅</div>
+      <div class="stat-info">
+        <div class="stat-value" id="rPeakAtt">--</div>
+        <div class="stat-label">Peak Attention</div>
+      </div>
+    </div>
+    <div class="stat-card card-orange">
+      <div class="stat-icon-wrap">📊</div>
+      <div class="stat-info">
+        <div class="stat-value" id="rTotalFrames">0</div>
+        <div class="stat-label">Total Frames</div>
+      </div>
+    </div>
+    <div class="stat-card card-red">
+      <div class="stat-icon-wrap">⚠</div>
+      <div class="stat-info">
+        <div class="stat-value" id="rAlerts">0</div>
+        <div class="stat-label">Total Alerts</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="panels-row">
+    <!-- History table -->
+    <div class="panel" style="flex:2">
+      <div class="panel-header">
+        <div class="panel-title">📋 Session History</div>
+        <div style="display:flex;gap:8px">
+          <button class="btn-sm" onclick="loadHistory()">↺ Refresh</button>
+          <button class="btn-sm btn-refresh" onclick="exportCSV()">⬇ Export CSV</button>
+        </div>
+      </div>
+      <div style="overflow-x:auto;max-height:420px">
+        <table class="data-table">
+          <thead>
+            <tr><th>#</th><th>Time</th><th>Students</th><th>Attention %</th><th>Status</th></tr>
+          </thead>
+          <tbody id="historyBody">
+            <tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:20px">No session history yet. Start monitoring to record data.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Session summary -->
+    <div class="panel" style="min-width:230px">
+      <div class="panel-header"><div class="panel-title">📝 Session Summary</div></div>
+      <div style="padding:16px 18px">
+        <div class="summary-row"><span>Session Start</span><strong id="sumStart">--</strong></div>
+        <div class="summary-row"><span>Total Duration</span><strong id="sumDuration">--</strong></div>
+        <div class="summary-row"><span>Avg Attention</span><strong id="sumAvg" style="color:var(--green)">--</strong></div>
+        <div class="summary-row"><span>Peak Attention</span><strong id="sumPeak" style="color:var(--blue)">--</strong></div>
+        <div class="summary-row"><span>Total Students</span><strong id="sumStudents">--</strong></div>
+        <div class="summary-row"><span>History Records</span><strong id="sumRecords">0</strong></div>
+        <div class="summary-row"><span>Alert Count</span><strong id="sumAlerts" style="color:var(--red)">0</strong></div>
+      </div>
+      <div style="padding:0 18px 16px">
+        <button class="btn-start" style="width:100%;margin-bottom:8px" onclick="exportCSV()">⬇ Export CSV</button>
+        <button class="btn-danger" style="width:100%" onclick="clearSessionData()">🗑 Clear History</button>
+      </div>
+    </div>
+  </div>
+</main>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+<script>
+  let historyData = [];
+
+  async function loadHistory() {
+    try {
+      const res = await fetch('/api/history');
+      historyData = await res.json();
+
+      const body = document.getElementById('historyBody');
+      if (!historyData.length) {
+        body.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:20px">No history yet. Start monitoring.</td></tr>';
+        return;
+      }
+
+      const atts = historyData.map(r => parseFloat(r.attention_pct)||0);
+      const avg  = (atts.reduce((a,b)=>a+b,0)/atts.length).toFixed(1);
+      const peak = Math.max(...atts).toFixed(1);
+      const maxFaces = Math.max(...historyData.map(r=>r.face_count||0));
+
+      safeText('rAvgAtt',    avg+'%');
+      safeText('rPeakAtt',   peak+'%');
+      safeText('rTotalFrames', historyData.length);
+      safeText('sumStart',   historyData[0]?.timestamp || '--');
+      safeText('sumAvg',     avg+'%');
+      safeText('sumPeak',    peak+'%');
+      safeText('sumStudents', maxFaces);
+      safeText('sumRecords', historyData.length);
+      safeText('aAvgAtt',    avg+'%');
+
+      body.innerHTML = historyData.slice(-100).reverse().map((r,i) => {
+        const a = parseFloat(r.attention_pct)||0;
+        const cls = a>=75?'status-good':a>=50?'status-warn':'status-bad';
+        const lbl = a>=75?'Good':a>=50?'Fair':'Low';
+        return `<tr>
+          <td>${historyData.length-i}</td>
+          <td>${r.timestamp||'--'}</td>
+          <td><strong>${r.face_count||0}</strong></td>
+          <td><div style="display:flex;align-items:center;gap:8px">
+            <div style="flex:1;background:var(--border);border-radius:4px;height:5px">
+              <div style="width:${a}%;height:5px;border-radius:4px;background:${a>=75?'var(--green)':a>=50?'var(--orange)':'var(--red)'}"></div>
+            </div><strong>${a.toFixed(1)}%</strong>
+          </div></td>
+          <td><span class="status-badge ${cls}">${lbl}</span></td>
+        </tr>`;
+      }).join('');
+
+    } catch(e) {
+      console.error(e);
+    }
+  }
+
+  function exportCSV() {
+    if (!historyData.length) { alert('No data to export. Start monitoring first.'); return; }
+    const rows = [['#','Timestamp','Face Count','Attention %'],
+      ...historyData.map((r,i)=>[i+1,r.timestamp,r.face_count,r.attention_pct])];
+    const a = document.createElement('a');
+    a.href = 'data:text/csv,'+encodeURIComponent(rows.map(r=>r.join(',')).join('\n'));
+    a.download = `session_report_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+  }
+
+  async function clearSessionData() {
+    if (!confirm('Clear all session history? This cannot be undone.')) return;
+    await fetch('/api/reset', {method:'POST'});
+    historyData = [];
+    loadHistory();
+  }
+
+  function safeText(id, val) { const el=document.getElementById(id); if(el) el.textContent=val; }
+
+  loadHistory();
+  setInterval(loadHistory, 5000);
+</script>
+</body>
+</html>

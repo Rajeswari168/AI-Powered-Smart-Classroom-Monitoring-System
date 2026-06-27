@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>404 — Smart Classroom</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
+  <style>
+    body { display:flex; align-items:center; justify-content:center;
+           min-height:100vh; background:var(--bg-base); flex-direction:column; gap:16px; }
+    .err-code { font-size:7rem; font-weight:800;
+                background:linear-gradient(135deg,#7c3aed,#2563eb);
+                -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .err-msg  { font-size:1.3rem; color:var(--text-muted); }
+    .err-link { margin-top:8px; padding:12px 28px; border-radius:10px;
+                background:linear-gradient(135deg,#7c3aed,#2563eb);
+                color:white; font-weight:700; font-size:.95rem; }
+    .err-link:hover { opacity:.85; }
+  </style>
+</head>
+<body>
+  <div class="err-code">404</div>
+  <div class="err-msg">Oops! Page not found.</div>
+  <a href="/dashboard" class="err-link">Go to Dashboard</a>
+</body>
+</html>

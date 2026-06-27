@@ -1,0 +1,22 @@
+# Cache files
+__pycache__/
+*.pyc
+
+# Local data & databases
+dataset/*.db
+dataset/*.sqlite
+
+# Agent configurations & temporary files
+.agents/
+.gemini/
+scratch/
+test_routes.py
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Large weights
+model/*.onnx
+model/*.pt
+model/*.bin

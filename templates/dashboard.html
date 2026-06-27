@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Dashboard — Smart Classroom Attention Detector</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
+</head>
+<body class="app-body">
+
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">🎓</div>
+    <div class="logo-text">
+      <span class="logo-title">Smart Classroom<br/>Monitoring System</span>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <a href="/dashboard"          class="nav-item active"><span class="nav-icon">🏠</span><span>DASHBOARD</span></a>
+    <a href="/live-monitoring"    class="nav-item"><span class="nav-icon">📹</span><span>LIVE MONITORING</span></a>
+    <a href="/students"           class="nav-item"><span class="nav-icon">👥</span><span>STUDENTS</span></a>
+    <a href="/attendance"         class="nav-item"><span class="nav-icon">📅</span><span>ATTENDANCE</span></a>
+    <a href="/attention-emotions" class="nav-item"><span class="nav-icon">🧠</span><span>ATTENTION & EMOTIONS</span></a>
+    <a href="/mobile-detection"   class="nav-item"><span class="nav-icon">📱</span><span>MOBILE DETECTION</span></a>
+    <a href="/distraction-score"  class="nav-item"><span class="nav-icon">🎯</span><span>DISTRACTION SCORE</span></a>
+    <a href="/analytics"          class="nav-item"><span class="nav-icon">📊</span><span>ANALYTICS</span></a>
+    <a href="/reports"            class="nav-item"><span class="nav-icon">📋</span><span>REPORTS</span></a>
+    <a href="/settings"           class="nav-item"><span class="nav-icon">⚙️</span><span>SETTINGS</span></a>
+  </nav>
+
+  <!-- Sidebar Date/Time Card -->
+  <div class="sidebar-datetime">
+    <div class="sidebar-date" id="sidebarDate">📅 -- --- ----</div>
+    <div class="sidebar-time" id="sidebarTime">00:00:00 AM</div>
+  </div>
+
+  <a href="/logout" class="sidebar-logout"><span>🚪</span> LOGOUT</a>
+</aside>
+
+<main class="main-content">
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+      <h1 class="page-title">Dashboard</h1>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-time" id="topbarTime"></div>
+      <div class="topbar-user">
+        <div class="user-avatar">T</div>
+        <span>Teacher</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Drowsiness alert -->
+  <div class="alert-banner" id="alertBanner" style="display:none">
+    🚨 <strong>ALERT:</strong> Student drowsiness / sleeping detected!
+    <button onclick="dismissAlert()" class="alert-dismiss">✕</button>
+  </div>
+
+  <!-- ── Row 1: Live Classroom | Class Overview | Attention Overview ── -->
+  <div class="panels-row" style="padding-top:20px">
+
+    <!-- Live feed -->
+    <div class="panel panel-feed" style="flex:1.8">
+      <div class="panel-header">
+        <div class="panel-title">
+          <div class="live-dot" id="liveDot"></div>
+          Live Classroom
+        </div>
+        <div class="panel-actions">
+          <button class="btn-start" id="btnStart" onclick="startMonitoring()">▶ Start Monitoring</button>
+          <button class="btn-stop hidden" id="btnStop" onclick="stopMonitoring()">⏹ Stop</button>
+        </div>
+      </div>
+      <div class="feed-container" id="feedContainer" style="min-height:280px">
+        <div class="feed-placeholder" id="feedPlaceholder">
+          <div class="placeholder-icon">📹</div>
+          <p style="color:rgba(255,255,255,.5);font-size:.9rem">Click Start Monitoring to activate webcam</p>
+        </div>
+        <img id="videoFeed" src="" alt="Live feed" class="video-feed hidden" onerror="handleFeedError()"/>
+        <!-- LIVE badge overlay -->
+        <div id="liveBadgeOverlay" class="hidden" style="position:absolute;top:10px;left:10px">
+          <span class="badge-live">● LIVE</span>
+        </div>
+      </div>
+      <div class="feed-footer">
+        <span>Monitoring: <strong id="monTime">00:00:00</strong></span>
+        <span>Frames: <strong id="totalFrames">0</strong></span>
+        <span>Session: <strong id="sessionStart">--:--</strong></span>
+      </div>
+    </div>
+
+    <!-- Class Overview -->
+    <div class="panel" style="flex:1;min-width:220px">
+      <div class="panel-header"><div class="panel-title">Class Overview</div></div>
+      <div class="overview-grid">
+        <div class="overview-item">
+          <div class="ov-label">Total Students</div>
+          <div class="ov-value ov-blue" id="statStudents">0</div>
+        </div>
+        <div class="overview-item">
+          <div class="ov-label">Present</div>
+          <div class="ov-value ov-green" id="ovPresent">0</div>
+        </div>
+        <div class="overview-item">
+          <div class="ov-label">Avg Attention</div>
+          <div class="ov-value ov-orange" id="ovAvgScore">0%</div>
+        </div>
+        <div class="overview-item">
+          <div class="ov-label">Active Students</div>
+          <div class="ov-value ov-purple" id="ovAttentive">0</div>
+        </div>
+      </div>
+      <!-- Quick Actions -->
+      <div style="padding:0 14px 14px">
+        <div style="font-size:.78rem;font-weight:600;color:var(--text-muted);margin-bottom:8px;padding-top:4px">QUICK ACTIONS</div>
+        <div class="quick-actions" style="padding:0">
+          <button class="btn-action-primary" onclick="startMonitoring()">Start Monitoring</button>
+          <a href="/reports" class="btn-action-outline">View Reports</a>
+          <!-- NEW: Advanced Dashboard link -->
+          <a href="/advanced-dashboard" class="btn-action-outline" style="flex:none;padding:11px 14px;font-size:.8rem">🧠 Advanced</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Attention Overview donut -->
+    <div class="panel" style="min-width:230px">
+      <div class="panel-header"><div class="panel-title">Attention Overview</div></div>
+      <div class="donut-wrap" style="padding:16px 0 8px">
+        <canvas id="attentionDonut" width="160" height="160"></canvas>
+        <div class="donut-center">
+          <div class="donut-pct" id="donutPct">0%</div>
+          <div class="donut-lbl">Avg Attention</div>
+        </div>
+      </div>
+      <div class="donut-legend">
+        <div class="legend-item"><span class="dot dot-green"></span>Attentive (<strong id="legAtt">0%</strong>)</div>
+        <div class="legend-item"><span class="dot dot-orange"></span>Distracted (<strong id="legDis">0%</strong>)</div>
+        <div class="legend-item"><span class="dot dot-red"></span>Inactive (<strong id="legSlp">0%</strong>)</div>
+      </div>
+    </div>
+
+  </div><!-- /panels-row -->
+
+  <!-- ── Row 2: Recent Alerts | Emotion | Detection Status ── -->
+  <div class="panels-row">
+
+    <!-- Recent Alerts -->
+    <div class="panel" style="flex:1.2">
+      <div class="panel-header">
+        <div class="panel-title">⚠ Recent Alerts</div>
+        <button class="btn-sm" onclick="clearAlerts()">Clear</button>
+      </div>
+      <ul class="alert-list" id="alertList">
+        <li class="alert-empty">No alerts — start monitoring to detect issues</li>
+      </ul>
+    </div>
+
+    <!-- Emotion Breakdown -->
+    <div class="panel" style="flex:1">
+      <div class="panel-header"><div class="panel-title">😊 Emotion Breakdown</div></div>
+      <div class="emotion-bars">
+        <div class="emo-row">
+          <span class="emo-lbl">😊 Happy</span>
+          <div class="emo-bar-wrap"><div class="emo-bar emo-happy" id="emoHappy" style="width:0%"></div></div>
+          <span class="emo-pct" id="emoHappyPct">0%</span>
+        </div>
+        <div class="emo-row">
+          <span class="emo-lbl">😐 Neutral</span>
+          <div class="emo-bar-wrap"><div class="emo-bar emo-neutral" id="emoNeutral" style="width:0%"></div></div>
+          <span class="emo-pct" id="emoNeutralPct">0%</span>
+        </div>
+        <div class="emo-row">
+          <span class="emo-lbl">😔 Bored</span>
+          <div class="emo-bar-wrap"><div class="emo-bar emo-bored" id="emoBored" style="width:0%"></div></div>
+          <span class="emo-pct" id="emoBoredPct">0%</span>
+        </div>
+        <div class="emo-row">
+          <span class="emo-lbl">😠 Distracted</span>
+          <div class="emo-bar-wrap"><div class="emo-bar emo-distracted" id="emoDistracted" style="width:0%"></div></div>
+          <span class="emo-pct" id="emoDistractedPct">0%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Detection Status -->
+    <div class="panel" style="min-width:220px">
+      <div class="panel-header"><div class="panel-title">Detection Status</div></div>
+      <div class="detection-list">
+        <div class="detection-item">
+          <div class="det-dot det-green"></div>
+          <span>Attentive</span>
+          <span class="det-count" id="detAtt">0</span>
+          <div class="det-bar-wrap"><div class="det-bar det-bar-green" id="barAtt"></div></div>
+        </div>
+        <div class="detection-item">
+          <div class="det-dot det-orange"></div>
+          <span>Distracted</span>
+          <span class="det-count" id="detDis">0</span>
+          <div class="det-bar-wrap"><div class="det-bar det-bar-orange" id="barDis"></div></div>
+        </div>
+        <div class="detection-item">
+          <div class="det-dot det-red"></div>
+          <span>Inactive</span>
+          <span class="det-count" id="detSlp">0</span>
+          <div class="det-bar-wrap"><div class="det-bar det-bar-red" id="barSlp"></div></div>
+        </div>
+      </div>
+      <!-- Mini stat cards -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 14px 14px">
+        <div style="background:var(--green-bg);border-radius:8px;padding:10px;text-align:center">
+          <div style="font-size:1.4rem;font-weight:800;color:var(--green)" id="statFocused">0</div>
+          <div style="font-size:.7rem;color:var(--text-muted)">Focused</div>
+        </div>
+        <div style="background:var(--orange-bg);border-radius:8px;padding:10px;text-align:center">
+          <div style="font-size:1.4rem;font-weight:800;color:var(--orange)" id="statDistracted">0</div>
+          <div style="font-size:.7rem;color:var(--text-muted)">Distracted</div>
+        </div>
+        <div style="background:var(--red-bg);border-radius:8px;padding:10px;text-align:center">
+          <div style="font-size:1.4rem;font-weight:800;color:var(--red)" id="statSleeping">0</div>
+          <div style="font-size:.7rem;color:var(--text-muted)">Sleeping</div>
+        </div>
+        <div style="background:var(--purple-bg);border-radius:8px;padding:10px;text-align:center">
+          <div style="font-size:1.4rem;font-weight:800;color:var(--accent)" id="attPct">0%</div>
+          <div style="font-size:.7rem;color:var(--text-muted)">Attention</div>
+        </div>
+        <!-- NEW: Mobile count card -->
+        <div style="background:var(--red-bg);border-radius:8px;padding:10px;text-align:center;grid-column:1">
+          <div style="font-size:1.2rem;font-weight:800;color:var(--red)" id="mobileCount">0</div>
+          <div style="font-size:.68rem;color:var(--text-muted)">📱 Phones Today</div>
+        </div>
+        <!-- NEW: Avg distraction score card -->
+        <div style="background:var(--orange-bg);border-radius:8px;padding:10px;text-align:center;grid-column:2">
+          <div style="font-size:1.2rem;font-weight:800;color:var(--orange)" id="avgDistractionScore">--%</div>
+          <div style="font-size:.68rem;color:var(--text-muted)">🎯 Distraction</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+<script>
+  // Show LIVE badge overlay when monitoring
+  const _origStart = startMonitoring;
+  startMonitoring = async function() {
+    await _origStart();
+    document.getElementById('liveBadgeOverlay')?.classList.remove('hidden');
+  };
+  const _origStop = stopMonitoring;
+  stopMonitoring = async function() {
+    await _origStop();
+    document.getElementById('liveBadgeOverlay')?.classList.add('hidden');
+  };
+</script>
+</body>
+</html>

@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Students — Smart Classroom</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
+  <style>
+    /* Modal styles */
+    .modal {
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center;
+    }
+    .modal-content {
+      background: white; border-radius: 12px; padding: 24px; width: 400px;
+      box-shadow: var(--shadow-md); display: flex; flex-direction: column; gap: 14px;
+    }
+    .modal-header { font-size: 1.1rem; font-weight: 700; color: var(--text); border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+    
+    /* Form Group Styles */
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .form-group label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-2);
+    }
+    .form-group input, .form-group select {
+      padding: 8px 12px;
+      font-size: 0.85rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: white;
+      color: var(--text);
+    }
+  </style>
+</head>
+<body class="app-body">
+
+<!-- ── Sidebar ── -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">🎓</div>
+    <div class="logo-text"><span class="logo-title">Smart Classroom<br/>Monitoring System</span></div>
+  </div>
+  <nav class="sidebar-nav">
+    <a href="/dashboard"          class="nav-item"><span class="nav-icon">🏠</span><span>DASHBOARD</span></a>
+    <a href="/live-monitoring"    class="nav-item"><span class="nav-icon">📹</span><span>LIVE MONITORING</span></a>
+    <a href="/students"           class="nav-item active"><span class="nav-icon">👥</span><span>STUDENTS</span></a>
+    <a href="/attendance"         class="nav-item"><span class="nav-icon">📅</span><span>ATTENDANCE</span></a>
+    <a href="/attention-emotions" class="nav-item"><span class="nav-icon">🧠</span><span>ATTENTION & EMOTIONS</span></a>
+    <a href="/mobile-detection"   class="nav-item"><span class="nav-icon">📱</span><span>MOBILE DETECTION</span></a>
+    <a href="/distraction-score"  class="nav-item"><span class="nav-icon">🎯</span><span>DISTRACTION SCORE</span></a>
+    <a href="/analytics"          class="nav-item"><span class="nav-icon">📊</span><span>ANALYTICS</span></a>
+    <a href="/reports"            class="nav-item"><span class="nav-icon">📋</span><span>REPORTS</span></a>
+    <a href="/settings"           class="nav-item"><span class="nav-icon">⚙️</span><span>SETTINGS</span></a>
+  </nav>
+
+  <!-- Sidebar Date/Time Card -->
+  <div class="sidebar-datetime">
+    <div class="sidebar-date" id="sidebarDate">📅 -- --- ----</div>
+    <div class="sidebar-time" id="sidebarTime">00:00:00 AM</div>
+  </div>
+
+  <a href="/logout" class="sidebar-logout"><span>🚪</span> LOGOUT</a>
+</aside>
+
+<!-- ── Main Content ── -->
+<main class="main-content">
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+      <h1 class="page-title">Students</h1>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-time" id="topbarTime"></div>
+      <div class="topbar-user">
+        <div class="user-avatar">T</div>
+        <span>Teacher</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- KPI Cards -->
+  <section class="stat-cards" style="padding-top:20px">
+    <div class="stat-card card-blue">
+      <div class="stat-icon-wrap" style="background: rgba(37,99,235,0.1); color: #2563eb;">👥</div>
+      <div class="stat-info">
+        <div class="stat-value">25</div>
+        <div class="stat-label">Total Students</div>
+        <div class="stat-trend" style="color: #64748b;">In Class</div>
+      </div>
+    </div>
+    <div class="stat-card card-green">
+      <div class="stat-icon-wrap" style="background: rgba(16,185,129,0.1); color: #10b981;">✅</div>
+      <div class="stat-info">
+        <div class="stat-value">20</div>
+        <div class="stat-label">Present Today</div>
+        <div class="stat-trend" style="color: #10b981;">80%</div>
+      </div>
+    </div>
+    <div class="stat-card card-red">
+      <div class="stat-icon-wrap" style="background: rgba(239,68,68,0.1); color: #ef4444;">❌</div>
+      <div class="stat-info">
+        <div class="stat-value">5</div>
+        <div class="stat-label">Absent Today</div>
+        <div class="stat-trend" style="color: #ef4444;">20%</div>
+      </div>
+    </div>
+    <div class="stat-card card-blue" style="border-left: 4px solid var(--accent);">
+      <div class="stat-icon-wrap" style="background: rgba(108,58,237,0.1); color: var(--accent);">📈</div>
+      <div class="stat-info">
+        <div class="stat-value">72%</div>
+        <div class="stat-label">Avg. Attention</div>
+        <div class="stat-trend" style="color: var(--accent);">Today</div>
+      </div>
+    </div>
+    <div class="stat-card card-orange">
+      <div class="stat-icon-wrap" style="background: rgba(245,158,11,0.1); color: #f59e0b;">🎯</div>
+      <div class="stat-info">
+        <div class="stat-value">65%</div>
+        <div class="stat-label">Avg. Distraction Score</div>
+        <div class="stat-trend" style="color: #f59e0b;">Today</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Filter & Controls -->
+  <div class="panel" style="margin: 16px 24px 8px; padding: 12px 18px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+    <div style="font-size: .9rem; color: var(--text-2); font-weight: 600;">Manage and view all students information</div>
+    <div style="display: flex; gap: 10px; align-items: center;">
+      <input type="text" id="dbSearchInput" placeholder="Search students..." class="search-input" style="width: 180px;" oninput="loadRosterList()"/>
+      <button class="btn-action-primary" style="padding: 7px 16px;" onclick="openAddModal()">+ Add Student</button>
+      <button class="btn-sm btn-refresh" style="padding: 7px 16px;">Import</button>
+    </div>
+  </div>
+
+  <!-- Students Roster Table -->
+  <div class="panel" style="margin: 0 24px 20px;">
+    <div class="panel-header">
+      <div class="panel-title">All Students (25)</div>
+    </div>
+    <div style="overflow-x: auto;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Photo</th>
+            <th>Name</th>
+            <th>Class</th>
+            <th>Attendance</th>
+            <th>Attention</th>
+            <th>Emotion</th>
+            <th>Mobile Usage</th>
+            <th>Distraction Score</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="dbRosterTableBody">
+          <!-- Populated dynamically -->
+        </tbody>
+      </table>
+    </div>
+    <!-- Pagination footer -->
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; border-top: 1px solid var(--border); font-size: .82rem; color: var(--text-muted);">
+      <div>Showing 1 to 8 of 25 students</div>
+      <div style="display: flex; gap: 5px;">
+        <button class="btn-sm" style="font-weight: 700;">1</button>
+        <button class="btn-sm">2</button>
+        <button class="btn-sm">3</button>
+        <button class="btn-sm">&gt;</button>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- Add Student Modal -->
+<div class="modal" id="addStudentModal">
+  <div class="modal-content">
+    <div class="modal-header">Add New Student</div>
+    <div class="form-group">
+      <label>Student ID</label>
+      <input type="text" id="newStudentId" class="search-input" placeholder="e.g. 21CS026"/>
+    </div>
+    <div class="form-group">
+      <label>Full Name</label>
+      <input type="text" id="newStudentName" class="search-input" placeholder="e.g. Ranbir Kapoor"/>
+    </div>
+    <div class="form-group">
+      <label>Class</label>
+      <select id="newStudentClass" class="setting-select">
+        <option value="AI & DS - A">AI & DS - A</option>
+        <option value="AI & DS - B">AI & DS - B</option>
+      </select>
+    </div>
+    <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 8px;">
+      <button class="btn-sm" onclick="closeAddModal()">Cancel</button>
+      <button class="btn-action-primary" onclick="submitAddStudent()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+<script>
+  async function loadRosterList() {
+    const q = document.getElementById('dbSearchInput').value;
+    const res = await fetch(`/api/db-students?q=${q}`);
+    const data = await res.json();
+    
+    // Sort by ID to match layout
+    data.sort((a,b) => a.id.localeCompare(b.id));
+
+    const tbody = document.getElementById('dbRosterTableBody');
+    tbody.innerHTML = data.map(s => {
+      let attCls = 'status-good';
+      if (s.attendance_status === 'Absent') {
+        attCls = 'status-bad';
+      }
+
+      let emoEmoji = '😐';
+      if (s.emotion === 'Happy') emoEmoji = '😊';
+      else if (s.emotion === 'Sad' || s.emotion === 'Bored') emoEmoji = '😔';
+      else if (s.emotion === 'Angry' || s.emotion === 'Distracted') emoEmoji = '😠';
+      else if (s.emotion === 'Sleepy') emoEmoji = '😴';
+
+      let scoreBadgeCls = 'status-good';
+      if (s.distraction_score < 60) scoreBadgeCls = 'status-bad';
+      else if (s.distraction_score < 80) scoreBadgeCls = 'status-warn';
+
+      let mobText = s.mobile_usage;
+      let mobColor = 'var(--text)';
+      if (s.mobile_usage === 'Yes') {
+        mobText = 'Yes';
+        mobColor = 'var(--red)';
+      }
+
+      const barColor = s.attention_score >= 75 ? 'var(--green)' : s.attention_score >= 50 ? 'var(--orange)' : 'var(--red)';
+      const distBarColor = s.distraction_score >= 80 ? 'var(--green)' : s.distraction_score >= 60 ? 'var(--orange)' : 'var(--red)';
+
+      const attentionBar = s.attendance_status === 'Absent' ? '-' : `
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="flex:1;background:var(--border);border-radius:4px;height:5px;width:70px;">
+            <div style="width:${s.attention_score}%;height:5px;border-radius:4px;background:${barColor}"></div>
+          </div>
+          <strong>${s.attention_score}%</strong>
+        </div>
+      `;
+
+      const distractionBar = s.attendance_status === 'Absent' ? '-' : `
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="flex:1;background:var(--border);border-radius:4px;height:5px;width:70px;">
+            <div style="width:${s.distraction_score}%;height:5px;border-radius:4px;background:${distBarColor}"></div>
+          </div>
+          <strong>${s.distraction_score}%</strong>
+        </div>
+      `;
+
+      return `<tr>
+        <td><strong>${s.id}</strong></td>
+        <td><div class="user-avatar" style="width:28px; height:28px; font-size:.78rem;">${s.name[0]}</div></td>
+        <td><strong>${s.name}</strong></td>
+        <td>${s.class}</td>
+        <td><span class="status-badge ${attCls}">${s.attendance_status}</span></td>
+        <td>${attentionBar}</td>
+        <td>${s.attendance_status === 'Absent' ? '-' : (emoEmoji + ' ' + s.emotion)}</td>
+        <td style="color:${mobColor}; font-weight:${s.mobile_usage === 'Yes' ? '700' : 'normal'};">${s.attendance_status === 'Absent' ? '-' : mobText}</td>
+        <td>${distractionBar}</td>
+        <td><span class="status-badge ${s.attendance_status === 'Absent' ? 'status-bad' : scoreBadgeCls}">${s.status}</span></td>
+        <td>
+          <div style="display:flex; gap:6px;">
+            <button class="btn-sm" style="color:var(--accent); border-color:rgba(108,58,237,0.15)">👁</button>
+            <button class="btn-sm">✏️</button>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  function openAddModal() {
+    document.getElementById('addStudentModal').style.display = 'flex';
+  }
+  function closeAddModal() {
+    document.getElementById('addStudentModal').style.display = 'none';
+  }
+
+  async function submitAddStudent() {
+    const sid = document.getElementById('newStudentId').value;
+    const name = document.getElementById('newStudentName').value;
+    const cls = document.getElementById('newStudentClass').value;
+    if (!sid || !name) {
+      alert('Please fill out student ID and Name.');
+      return;
+    }
+    const res = await fetch('/api/add-student', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: sid, name: name, class: cls })
+    });
+    const result = await res.json();
+    if (result.success) {
+      closeAddModal();
+      loadRosterList();
+    } else {
+      alert(result.error || 'Error saving student');
+    }
+  }
+
+  window.addEventListener('load', loadRosterList);
+</script>
+</body>
+</html>

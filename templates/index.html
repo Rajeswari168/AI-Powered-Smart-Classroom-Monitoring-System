@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Login — Smart Classroom Attention Detector</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
+</head>
+<body class="login-body">
+  <div class="bg-blob b1"></div>
+  <div class="bg-blob b2"></div>
+  <div class="bg-blob b3"></div>
+
+  <div class="login-wrapper">
+    <!-- Brand panel -->
+    <div class="login-brand">
+      <div class="brand-icon">🎓</div>
+      <h1>Smart Classroom<br/>Attention Detection</h1>
+      <p>AI-powered real-time monitoring system that tracks student attention, detects drowsiness, and analyzes classroom engagement.</p>
+      <div class="brand-features">
+        <span class="feature-pill">🧠 AI-Powered</span>
+        <span class="feature-pill">👁️ Eye Tracking</span>
+        <span class="feature-pill">😊 Emotion AI</span>
+        <span class="feature-pill">📊 Analytics</span>
+        <span class="feature-pill">🔔 Alerts</span>
+        <span class="feature-pill">📋 Reports</span>
+      </div>
+    </div>
+
+    <!-- Login form -->
+    <div class="login-form-panel">
+      <h2>Welcome Back</h2>
+      <p class="login-sub">Sign in to access your classroom dashboard</p>
+
+      {% if error %}
+      <div class="alert-error">⚠ {{ error }}</div>
+      {% endif %}
+
+      <form method="POST" action="/">
+        <div class="form-group">
+          <label for="username">Username</label>
+          <div class="input-wrap">
+            <span class="input-icon">👤</span>
+            <input type="text" id="username" name="username" placeholder="Enter your username" required autocomplete="username"/>
+          </div>
+        </div>
+        <div class="form-group" style="margin-top:8px">
+          <label for="password">Password</label>
+          <div class="input-wrap">
+            <span class="input-icon">🔒</span>
+            <input type="password" id="password" name="password" placeholder="Enter your password" required autocomplete="current-password"/>
+            <button type="button" class="toggle-pw" onclick="togglePw()">👁</button>
+          </div>
+        </div>
+        <div class="form-check" style="margin-top:6px">
+          <input type="checkbox" id="remember"/><label for="remember">Remember me</label>
+          <a href="#" class="forgot-link" style="margin-left:auto">Forgot password?</a>
+        </div>
+        <button type="submit" class="btn-login" style="margin-top:16px">Sign In →</button>
+      </form>
+
+      <div class="demo-hint" style="margin-top:12px">
+        <strong>Demo credentials:</strong><br/>
+        Username: <code>teacher</code> &nbsp;|&nbsp; Password: <code>admin123</code>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function togglePw() {
+      const pw = document.getElementById('password');
+      pw.type = pw.type === 'password' ? 'text' : 'password';
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Advanced Dashboard — Smart Classroom</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body class="app-body">
+
+<!-- ── Sidebar ── -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">🎓</div>
+    <div class="logo-text"><span class="logo-title">Smart Classroom<br/>Attention Detection</span></div>
+  </div>
+  <nav class="sidebar-nav">
+    <a href="/dashboard"          class="nav-item"><span class="nav-icon">🏠</span><span>Dashboard</span></a>
+    <a href="/live-monitoring"    class="nav-item"><span class="nav-icon">📹</span><span>Live Monitoring</span></a>
+    <a href="/analytics"          class="nav-item"><span class="nav-icon">📊</span><span>Analytics</span></a>
+    <a href="/advanced-dashboard" class="nav-item active"><span class="nav-icon">🧠</span><span>Advanced</span></a>
+    <a href="/reports"            class="nav-item"><span class="nav-icon">📋</span><span>Reports</span></a>
+    <a href="/students"           class="nav-item"><span class="nav-icon">👥</span><span>Students</span></a>
+    <a href="/settings"           class="nav-item"><span class="nav-icon">⚙️</span><span>Settings</span></a>
+  </nav>
+  <a href="/logout" class="sidebar-logout"><span>🚪</span> Logout</a>
+</aside>
+
+<!-- ── Main ── -->
+<main class="main-content">
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+      <h1 class="page-title">🧠 Advanced Dashboard</h1>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-time" id="topbarTime"></div>
+      <div class="topbar-user"><div class="user-avatar">T</div><span>Teacher</span></div>
+    </div>
+  </header>
+
+  <!-- ── KPI Cards ── -->
+  <section class="stat-cards" style="padding-top:20px">
+    <!-- Mobile detections today -->
+    <div class="stat-card card-red">
+      <div class="stat-icon-wrap" style="font-size:1.6rem">📱</div>
+      <div class="stat-info">
+        <div class="stat-value" id="mobileCount">0</div>
+        <div class="stat-label">Mobile Detections Today</div>
+        <div class="stat-trend" id="mobileStatus">No active monitoring</div>
+      </div>
+    </div>
+    <!-- Avg distraction score -->
+    <div class="stat-card card-orange">
+      <div class="stat-icon-wrap" style="font-size:1.6rem">🎯</div>
+      <div class="stat-info">
+        <div class="stat-value" id="avgDistractionScore">--</div>
+        <div class="stat-label">Avg Distraction Score</div>
+        <div class="stat-trend" id="distractionLabel">--</div>
+      </div>
+    </div>
+    <!-- Attention % -->
+    <div class="stat-card card-green">
+      <div class="stat-icon-wrap" style="font-size:1.6rem">✅</div>
+      <div class="stat-info">
+        <div class="stat-value" id="attPctAdv">--%</div>
+        <div class="stat-label">Session Attention %</div>
+        <div class="stat-trend">Live session</div>
+      </div>
+    </div>
+    <!-- Total students live -->
+    <div class="stat-card card-blue">
+      <div class="stat-icon-wrap" style="font-size:1.6rem">👥</div>
+      <div class="stat-info">
+        <div class="stat-value" id="totalStudentsAdv">0</div>
+        <div class="stat-label">Students Detected</div>
+        <div class="stat-trend">In camera frame</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Row 2: Distraction trend + Phone log ── -->
+  <div class="panels-row">
+
+    <!-- Distraction score trend chart -->
+    <div class="panel" style="flex:2">
+      <div class="panel-header">
+        <div class="panel-title">📉 Distraction Score Trend (Live Session)</div>
+        <a href="/api/export-csv" class="btn-sm btn-refresh">⬇ Export CSV</a>
+      </div>
+      <div style="padding:16px;height:260px">
+        <canvas id="distractionTrendChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Phone detection log -->
+    <div class="panel" style="min-width:260px">
+      <div class="panel-header">
+        <div class="panel-title">📱 Phone Detection Log</div>
+        <span id="phoneBadge" style="background:var(--red-bg);color:var(--red);font-size:.72rem;font-weight:700;padding:3px 9px;border-radius:20px">Today: 0</span>
+      </div>
+      <ul class="alert-list" id="phoneLogList" style="max-height:280px">
+        <li class="alert-empty">No phone detections today</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- ── Row 3: Most Attentive | Most Distracted | Head Pose ── -->
+  <div class="panels-row">
+
+    <!-- Most Attentive students -->
+    <div class="panel" style="flex:1">
+      <div class="panel-header"><div class="panel-title">🏆 Most Attentive</div></div>
+      <div class="top-list" id="mostAttentiveList">
+        <div style="color:var(--text-muted);font-size:.82rem;padding:6px 0">Start monitoring to see rankings</div>
+      </div>
+    </div>
+
+    <!-- Most Distracted students -->
+    <div class="panel" style="flex:1">
+      <div class="panel-header"><div class="panel-title">⚠ Most Distracted</div></div>
+      <div class="top-list" id="mostDistractedList">
+        <div style="color:var(--text-muted);font-size:.82rem;padding:6px 0">Start monitoring to see rankings</div>
+      </div>
+    </div>
+
+    <!-- Head Pose distribution donut -->
+    <div class="panel" style="min-width:220px">
+      <div class="panel-header"><div class="panel-title">🧭 Head Pose Distribution</div></div>
+      <div class="donut-wrap" style="padding:16px 0 8px">
+        <canvas id="headPoseDonut" width="150" height="150"></canvas>
+        <div class="donut-center">
+          <div class="donut-pct" id="forwardPct">0%</div>
+          <div class="donut-lbl">Forward</div>
+        </div>
+      </div>
+      <div class="donut-legend">
+        <div class="legend-item"><span class="dot dot-green"></span>Forward <strong id="hpForward">0</strong></div>
+        <div class="legend-item"><span class="dot dot-orange"></span>Down <strong id="hpDown">0</strong></div>
+        <div class="legend-item"><span class="dot dot-blue"></span>Up <strong id="hpUp">0</strong></div>
+      </div>
+    </div>
+
+    <!-- Scoring breakdown -->
+    <div class="panel" style="min-width:220px">
+      <div class="panel-header"><div class="panel-title">🧮 Score Breakdown</div></div>
+      <div style="padding:14px 18px;font-size:.82rem;color:var(--text-2)">
+        <div style="background:var(--bg);border-radius:8px;padding:12px;margin-bottom:8px">
+          <div style="font-weight:700;color:var(--green);margin-bottom:6px">✅ Positive Factors</div>
+          <div style="display:flex;justify-content:space-between;padding:3px 0"><span>Eyes Open (Board)</span><strong style="color:var(--green)">+40</strong></div>
+          <div style="display:flex;justify-content:space-between;padding:3px 0"><span>Happy / Neutral</span><strong style="color:var(--green)">+20</strong></div>
+        </div>
+        <div style="background:var(--bg);border-radius:8px;padding:12px">
+          <div style="font-weight:700;color:var(--red);margin-bottom:6px">❌ Negative Factors</div>
+          <div style="display:flex;justify-content:space-between;padding:3px 0"><span>Mobile Phone</span><strong style="color:var(--red)">-30</strong></div>
+          <div style="display:flex;justify-content:space-between;padding:3px 0"><span>Looking Down</span><strong style="color:var(--red)">-20</strong></div>
+          <div style="display:flex;justify-content:space-between;padding:3px 0"><span>Sleeping</span><strong style="color:var(--red)">-40</strong></div>
+        </div>
+        <div style="margin-top:10px;padding:8px;background:var(--purple-bg);border-radius:8px;text-align:center">
+          <div style="font-size:.72rem;color:var(--text-muted);margin-bottom:4px">Score Range</div>
+          <div><span style="color:var(--green);font-weight:700">80-100</span> Highly Attentive</div>
+          <div><span style="color:var(--orange);font-weight:700">60-79</span> Moderate</div>
+          <div><span style="color:var(--red);font-weight:700">0-59</span> Highly Distracted</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── Row 4: Live student detail table ── -->
+  <div class="panel" style="margin:0 24px 20px">
+    <div class="panel-header">
+      <div class="panel-title">👤 Live Student Distraction Details</div>
+      <div style="display:flex;gap:8px">
+        <span id="liveTagAdv" class="badge-live" style="display:none">LIVE</span>
+        <a href="/api/export-csv" class="btn-sm btn-refresh">⬇ Export CSV</a>
+      </div>
+    </div>
+    <div style="overflow-x:auto">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Student</th>
+            <th>Status</th>
+            <th>Emotion</th>
+            <th>Head Pose</th>
+            <th>Mobile</th>
+            <th>Attention %</th>
+            <th>Distraction Score</th>
+            <th>Label</th>
+          </tr>
+        </thead>
+        <tbody id="advStudentBody">
+          <tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:24px">
+            Start monitoring to see live student distraction details
+          </td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+<script>
+  // ── Chart init ────────────────────────────────────────────────────────────
+  Chart.defaults.color       = '#64748b';
+  Chart.defaults.borderColor = '#e8ecf4';
+
+  const disTrendData   = { labels:[], vals:[] };
+  const headPoseData   = { Forward:0, Down:0, Up:0 };
+  let   headPoseDonut  = null;
+  let   disTrendChart  = null;
+
+  // ── Distraction trend chart ───────────────────────────────────────────────
+  disTrendChart = new Chart(document.getElementById('distractionTrendChart'), {
+    type: 'line',
+    data: { labels: disTrendData.labels, datasets: [{
+      label: 'Avg Distraction Score',
+      data:  disTrendData.vals,
+      borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,.1)',
+      tension: 0.4, fill: true, pointRadius: 2,
+    }]},
+    options: {
+      animation: false,
+      plugins: { legend:{display:false} },
+      scales: {
+        y: { min:0, max:100, ticks:{color:'#64748b'}, grid:{color:'#e8ecf4'} },
+        x: { ticks:{color:'#64748b', maxTicksLimit:15}, grid:{color:'#e8ecf4'} },
+      }
+    }
+  });
+
+  // ── Head pose donut ───────────────────────────────────────────────────────
+  headPoseDonut = new Chart(document.getElementById('headPoseDonut'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Forward','Down','Up'],
+      datasets: [{ data:[1,0,0],
+        backgroundColor:['#22c55e','#f59e0b','#3b82f6'], borderWidth:0 }]
+    },
+    options: { cutout:'68%', plugins:{legend:{display:false}}, animation:{duration:400} }
+  });
+
+  // ── Refresh all data ──────────────────────────────────────────────────────
+  function refresh() {
+    // Live stats
+    fetch('/api/stats').then(r=>r.json()).then(s => {
+      const score = s.avg_distraction_score || 0;
+      document.getElementById('mobileCount').textContent       = s.mobile_count || 0;
+      document.getElementById('avgDistractionScore').textContent = score.toFixed(0) + '%';
+      document.getElementById('attPctAdv').textContent         = (s.attention_pct||0).toFixed(1) + '%';
+      document.getElementById('totalStudentsAdv').textContent  = s.total_students || 0;
+
+      // Label
+      const lbl = score>=80?'Highly Attentive':score>=60?'Moderate Attention':'Highly Distracted';
+      const lbl_el = document.getElementById('distractionLabel');
+      if(lbl_el){ lbl_el.textContent = lbl; }
+
+      // Trend
+      const ts = new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+      if(s.total_frames){
+        disTrendData.labels.push(ts);
+        disTrendData.vals.push(score);
+        if(disTrendData.labels.length>60){ disTrendData.labels.shift(); disTrendData.vals.shift(); }
+        disTrendChart.data.labels   = disTrendData.labels;
+        disTrendChart.data.datasets[0].data = disTrendData.vals;
+        disTrendChart.update('none');
+      }
+
+      // Student table
+      const students = s.students || [];
+      if(students.length){
+        document.getElementById('liveTagAdv').style.display='inline-block';
+        renderAdvStudentTable(students);
+        updateHeadPose(students);
+        renderRankings(students);
+      }
+    }).catch(()=>{});
+
+    // Phone log
+    fetch('/api/phone-log').then(r=>r.json()).then(d => {
+      document.getElementById('phoneBadge').textContent = `Today: ${d.today_count||0}`;
+      document.getElementById('mobileCount').textContent = d.today_count||0;
+      const list = document.getElementById('phoneLogList');
+      if(!d.events || d.events.length===0){
+        list.innerHTML = '<li class="alert-empty">No phone detections today</li>';
+        return;
+      }
+      list.innerHTML = d.events.slice(-15).reverse().map(e =>
+        `<li class="alert-sleep">📱 Student ${e.student_id+1} — ${e.time} (${(e.confidence*100).toFixed(0)}%)</li>`
+      ).join('');
+    }).catch(()=>{});
+  }
+
+  function renderAdvStudentTable(students) {
+    const body = document.getElementById('advStudentBody');
+    body.innerHTML = students.map(st => {
+      const sc   = st.distraction_score || 0;
+      const cls  = sc>=80?'status-good':sc>=60?'status-warn':'status-bad';
+      const lbl  = st.score_label || (sc>=80?'Highly Attentive':sc>=60?'Moderate Attention':'Highly Distracted');
+      const mob  = st.mobile_detected
+        ? '<span style="color:var(--red);font-weight:700">📱 YES</span>'
+        : '<span style="color:var(--text-muted)">No</span>';
+      const stCls = st.status==='Focused'?'status-good':st.status==='Sleeping'?'status-bad':'status-warn';
+      const score_color = sc>=80?'var(--green)':sc>=60?'var(--orange)':'var(--red)';
+      return `<tr>
+        <td><strong>Student ${st.id+1}</strong></td>
+        <td><span class="status-badge ${stCls}">${st.status}</span></td>
+        <td>${st.emotion}</td>
+        <td>${st.head_pose||'Forward'}</td>
+        <td>${mob}</td>
+        <td>${st.attention_pct}%</td>
+        <td><div style="display:flex;align-items:center;gap:8px">
+          <div style="flex:1;background:var(--border);border-radius:4px;height:6px">
+            <div style="width:${sc}%;height:6px;border-radius:4px;background:${score_color}"></div>
+          </div><strong style="color:${score_color}">${sc}%</strong></div></td>
+        <td><span class="status-badge ${cls}">${lbl}</span></td>
+      </tr>`;
+    }).join('');
+  }
+
+  function updateHeadPose(students) {
+    headPoseData.Forward = students.filter(s=>s.head_pose==='Forward').length;
+    headPoseData.Down    = students.filter(s=>s.head_pose==='Down').length;
+    headPoseData.Up      = students.filter(s=>s.head_pose==='Up').length;
+    headPoseDonut.data.datasets[0].data = [headPoseData.Forward, headPoseData.Down, headPoseData.Up];
+    headPoseDonut.update('none');
+    const total = students.length || 1;
+    document.getElementById('hpForward').textContent = headPoseData.Forward;
+    document.getElementById('hpDown').textContent    = headPoseData.Down;
+    document.getElementById('hpUp').textContent      = headPoseData.Up;
+    document.getElementById('forwardPct').textContent = Math.round(headPoseData.Forward/total*100)+'%';
+  }
+
+  function renderRankings(students) {
+    const sorted = [...students].sort((a,b)=>(b.distraction_score||0)-(a.distraction_score||0));
+
+    document.getElementById('mostAttentiveList').innerHTML = sorted.slice(0,5).map(st => {
+      const sc = st.distraction_score||0;
+      return `<div class="top-row">
+        <span class="top-name">Student ${st.id+1}</span>
+        <div class="top-bar-wrap"><div style="height:5px;border-radius:4px;background:var(--green);width:${sc}%"></div></div>
+        <span style="min-width:36px;text-align:right;font-weight:700;color:var(--green);font-size:.78rem">${sc}%</span>
+      </div>`;
+    }).join('') || '<div style="color:var(--text-muted);font-size:.82rem">--</div>';
+
+    document.getElementById('mostDistractedList').innerHTML = sorted.slice(-5).reverse().map(st => {
+      const sc = st.distraction_score||0;
+      return `<div class="top-row">
+        <span class="top-name">Student ${st.id+1}</span>
+        <div class="top-bar-wrap"><div style="height:5px;border-radius:4px;background:var(--red);width:${sc}%"></div></div>
+        <span style="min-width:36px;text-align:right;font-weight:700;color:var(--red);font-size:.78rem">${sc}%</span>
+      </div>`;
+    }).join('') || '<div style="color:var(--text-muted);font-size:.82rem">--</div>';
+  }
+
+  // Auto-refresh every second
+  refresh();
+  setInterval(refresh, 1000);
+</script>
+</body>
+</html>
