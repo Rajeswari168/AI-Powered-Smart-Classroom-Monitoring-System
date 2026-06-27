@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Live Monitoring — Smart Classroom</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="static/css/style.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body class="app-body">
+
+<!-- ── Sidebar ── -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">🎓</div>
+    <div class="logo-text"><span class="logo-title">Smart Classroom<br/>Monitoring System</span></div>
+  </div>
+  <nav class="sidebar-nav">
+    <a href="dashboard.html"          class="nav-item"><span class="nav-icon">🏠</span><span>DASHBOARD</span></a>
+    <a href="live.html"    class="nav-item active"><span class="nav-icon">📹</span><span>LIVE MONITORING</span></a>
+    <a href="students.html"           class="nav-item"><span class="nav-icon">👥</span><span>STUDENTS</span></a>
+    <a href="attendance.html"         class="nav-item"><span class="nav-icon">📅</span><span>ATTENDANCE</span></a>
+    <a href="attention_emotions.html" class="nav-item"><span class="nav-icon">🧠</span><span>ATTENTION & EMOTIONS</span></a>
+    <a href="mobile_detection.html"   class="nav-item"><span class="nav-icon">📱</span><span>MOBILE DETECTION</span></a>
+    <a href="distraction_score.html"  class="nav-item"><span class="nav-icon">🎯</span><span>DISTRACTION SCORE</span></a>
+    <a href="analytics.html"          class="nav-item"><span class="nav-icon">📊</span><span>ANALYTICS</span></a>
+    <a href="reports.html"            class="nav-item"><span class="nav-icon">📋</span><span>REPORTS</span></a>
+    <a href="settings.html"           class="nav-item"><span class="nav-icon">⚙️</span><span>SETTINGS</span></a>
+  </nav>
+
+  <!-- Sidebar Date/Time Card -->
+  <div class="sidebar-datetime">
+    <div class="sidebar-date" id="sidebarDate">📅 -- --- ----</div>
+    <div class="sidebar-time" id="sidebarTime">00:00:00 AM</div>
+  </div>
+
+  <a href="index.html" class="sidebar-logout"><span>🚪</span> LOGOUT</a>
+</aside>
+
+<!-- ── Main Content ── -->
+<main class="main-content">
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+      <h1 class="page-title">Live Monitoring</h1>
+    </div>
+    <div style="display: flex; gap: 10px; align-items: center;">
+      <select class="setting-select" style="padding: 6px 12px; font-size: .8rem;">
+        <option>AI & DS - A</option>
+      </select>
+      <select class="setting-select" style="padding: 6px 12px; font-size: .8rem;">
+        <option>Camera 1</option>
+        <option>Camera 2</option>
+      </select>
+      <button class="btn-sm" style="background:#2563eb; color:white; border:none; padding:7px 14px; font-weight:600;" onclick="toggleFullscreen()">📺 Fullscreen</button>
+    </div>
+  </header>
+
+  <!-- Live layout Row -->
+  <div class="panels-row" style="padding-top: 16px;">
+    
+    <!-- Feed stream -->
+    <div class="panel" style="flex: 2.2; min-width: 320px;">
+      <div class="panel-header" style="padding: 10px 14px;">
+        <div class="panel-title">
+          <div class="live-dot active"></div>
+          Live Classroom Stream
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn-start" id="btnStart" onclick="startMonitoring()">▶ Start Monitoring</button>
+          <button class="btn-stop hidden" id="btnStop" onclick="stopMonitoring()">⏹ Stop</button>
+        </div>
+      </div>
+      <div class="feed-container" id="feedContainer" style="background: #000; min-height: 310px; position: relative;">
+        <!-- Overlays -->
+        <div style="position: absolute; top: 12px; left: 12px; z-index: 5; display: flex; gap: 8px;">
+          <span class="badge-live">● LIVE</span>
+          <span id="recTime" style="background: rgba(0,0,0,0.6); color: white; padding: 3px 8px; border-radius: 20px; font-size: .72rem; font-family: monospace;">REC 00:00:00</span>
+        </div>
+        <div style="position: absolute; top: 12px; right: 12px; z-index: 5;">
+          <span style="background: rgba(0,0,0,0.6); color: white; padding: 3px 8px; border-radius: 20px; font-size: .72rem;">FPS: 24</span>
+        </div>
+
+        <img id="videoFeed" src="" alt="Classroom live stream" class="video-feed hidden" style="width:100%; max-height:360px; object-fit:contain;" onerror="handleFeedError()"/>
+        
+        <div class="feed-placeholder" id="feedPlaceholder" style="padding: 60px 20px;">
+          <div class="placeholder-icon" style="font-size:2.8rem;">📹</div>
+          <p style="color: rgba(255,255,255,0.5); font-size: .9rem;">Click Start Monitoring to activate live video stream</p>
+        </div>
+      </div>
+      <!-- BGR status bar (matching screenshots) -->
+      <div style="background: #111827; color: white; padding: 8px 16px; display: flex; gap: 20px; font-size: .78rem; border-top: 1px solid var(--border);">
+        <span style="display:flex; align-items:center; gap:6px;"><span class="dot dot-blue" style="width:8px; height:8px;"></span> Students Detected: <strong id="lblDetected">0</strong></span>
+        <span style="display:flex; align-items:center; gap:6px;"><span class="dot dot-green" style="width:8px; height:8px;"></span> Active: <strong id="lblActive">0</strong></span>
+        <span style="display:flex; align-items:center; gap:6px;"><span class="dot dot-red" style="width:8px; height:8px;"></span> Mobile Detected: <strong id="lblMobile">0</strong></span>
+        <span style="display:flex; align-items:center; gap:6px;"><span class="dot dot-yellow" style="width:8px; height:8px;"></span> Drowsy/Sleepy: <strong id="lblDrowsy">0</strong></span>
+      </div>
+    </div>
+
+    <!-- Right Column Analytics -->
+    <div class="panels-col" style="flex: 1.1; gap: 12px;">
+      <!-- Live Analytics List -->
+      <div class="panel">
+        <div class="panel-header" style="padding: 8px 14px;"><div class="panel-title">Live Analytics</div></div>
+        <div class="overview-grid" style="padding: 10px; gap: 8px;">
+          <div class="overview-item" style="padding: 8px 4px;">
+            <div class="ov-label">Average Attention</div>
+            <div class="ov-value ov-green" style="font-size: 1.3rem;" id="liveAvgAtt">72%</div>
+          </div>
+          <div class="overview-item" style="padding: 8px 4px;">
+            <div class="ov-label">Avg Distraction Score</div>
+            <div class="ov-value ov-orange" style="font-size: 1.3rem;" id="liveAvgDist">65%</div>
+          </div>
+          <div class="overview-item" style="padding: 8px 4px;">
+            <div class="ov-label">Mobile Detected</div>
+            <div class="ov-value ov-red" style="font-size: 1.3rem;" id="liveMobile">0</div>
+          </div>
+          <div class="overview-item" style="padding: 8px 4px;">
+            <div class="ov-label">Happy</div>
+            <div class="ov-value ov-blue" style="font-size: 1.3rem;" id="liveHappy">40%</div>
+          </div>
+          <div class="overview-item" style="padding: 8px 4px;">
+            <div class="ov-label">Neutral</div>
+            <div class="ov-value ov-purple" style="font-size: 1.3rem;" id="liveNeutral">30%</div>
+          </div>
+          <div class="overview-item" style="padding: 8px 4px;">
+            <div class="ov-label">Sleepy / Drowsy</div>
+            <div class="ov-value ov-red" style="font-size: 1.3rem;" id="liveDrowsy">10%</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Donut Distribution -->
+      <div class="panel">
+        <div class="panel-header" style="padding: 8px 14px;"><div class="panel-title">Distraction Score Distribution</div></div>
+        <div class="donut-wrap" style="padding: 8px 0 2px;">
+          <canvas id="liveDistDonut" width="110" height="110"></canvas>
+          <div class="donut-center">
+            <div class="donut-pct" style="font-size: 1.25rem; color: #f59e0b;">65%</div>
+          </div>
+        </div>
+        <div class="donut-legend" style="padding: 0 10px 8px; font-size: .75rem; gap: 4px;">
+          <div class="legend-item"><span class="dot dot-green" style="width:7px; height:7px;"></span>Highly Attentive (80-100) <strong id="lblHighPct">35%</strong></div>
+          <div class="legend-item"><span class="dot dot-orange" style="width:7px; height:7px;"></span>Moderate (60-79) <strong id="lblModPct">40%</strong></div>
+          <div class="legend-item"><span class="dot dot-red" style="width:7px; height:7px;"></span>Highly Distracted (<60) <strong id="lblLowPct">25%</strong></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Students in View Carousel -->
+  <div class="panel" style="margin: 0 24px 16px;">
+    <div class="panel-header">
+      <div class="panel-title">Students in View (<span id="lblInViewCount">0</span>)</div>
+    </div>
+    <div id="studentCardsContainer" style="display: flex; gap: 12px; overflow-x: auto; padding: 14px 16px; min-height: 80px;">
+      <div style="color: var(--text-muted); font-size: .83rem; margin: auto;">Start live classroom monitoring to view active student cards</div>
+    </div>
+  </div>
+
+  <!-- Row 4: Recent Alerts & Live Charts -->
+  <div class="panels-row">
+    <!-- Alerts list -->
+    <div class="panel" style="flex: 1.2; min-width: 250px;">
+      <div class="panel-header">
+        <div class="panel-title">Recent Alerts</div>
+      </div>
+      <ul class="alert-list" id="recentAlertsList" style="max-height: 190px;">
+        <li class="alert-empty">No alerts yet</li>
+      </ul>
+    </div>
+
+    <!-- Charts -->
+    <div class="panel" style="flex: 2; min-width: 320px;">
+      <div class="panel-header"><div class="panel-title">Attention Over Time (Today)</div></div>
+      <div style="padding: 12px; height: 180px;">
+        <canvas id="liveAttTimeChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script src="static/js/dashboard.js"></script>
+<script>
+  let liveDistDonut = null;
+  let liveAttTimeChart = null;
+  let monTimeSec = 0;
+  let recTimer = null;
+
+  function initCharts() {
+    liveDistDonut = new Chart(document.getElementById('liveDistDonut'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Highly Attentive', 'Moderate', 'Highly Distracted'],
+        datasets: [{
+          data: [35, 40, 25],
+          backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+          borderWidth: 0
+        }]
+      },
+      options: { cutout: '65%', plugins: { legend: { display: false } } }
+    });
+
+    liveAttTimeChart = new Chart(document.getElementById('liveAttTimeChart'), {
+      type: 'line',
+      data: {
+        labels: ['09:00', '10:00', '11:00', '12:00', '01:00', '02:00', '03:00', '04:00'],
+        datasets: [{
+          data: [72, 75, 78, 70, 73, 76, 72, 75],
+          borderColor: '#2563eb',
+          backgroundColor: 'rgba(37,99,235,0.06)',
+          fill: true,
+          tension: 0.35,
+          pointRadius: 2
+        }]
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { min: 0, max: 100, grid: { color: '#e8ecf4' } },
+          x: { grid: { color: '#e8ecf4' } }
+        }
+      }
+    });
+  }
+
+  // Override start/stop monitoring to handle timer
+  const origStartMon = startMonitoring;
+  startMonitoring = async function() {
+    await origStartMon();
+    monTimeSec = 0;
+    if (recTimer) clearInterval(recTimer);
+    recTimer = setInterval(() => {
+      monTimeSec++;
+      const hrs = String(Math.floor(monTimeSec / 3600)).padStart(2, '0');
+      const mins = String(Math.floor((monTimeSec % 3600) / 60)).padStart(2, '0');
+      const secs = String(monTimeSec % 60).padStart(2, '0');
+      document.getElementById('recTime').textContent = `REC ${hrs}:${mins}:${secs}`;
+    }, 1000);
+  };
+
+  const origStopMon = stopMonitoring;
+  stopMonitoring = async function() {
+    await origStopMon();
+    if (recTimer) clearInterval(recTimer);
+    document.getElementById('recTime').textContent = 'REC 00:00:00';
+  };
+
+  // Override applyStats to render live indicators
+  const origApplyStats = applyStats;
+  applyStats = function(s) {
+    origApplyStats(s);
+
+    const total = s.total_students || 0;
+    const foc = s.focused || 0;
+    const dis = s.distracted || 0;
+    const slp = s.sleeping || 0;
+
+    // Bottom BGR Bar
+    document.getElementById('lblDetected').textContent = total;
+    document.getElementById('lblActive').textContent = foc;
+    document.getElementById('lblMobile').textContent = s.mobile_count || 0;
+    document.getElementById('lblDrowsy').textContent = slp;
+
+    // Live Analytics Widget
+    document.getElementById('liveAvgAtt').textContent = (s.attention_pct || 0).toFixed(0) + '%';
+    document.getElementById('liveAvgDist').textContent = (s.avg_distraction_score || 0).toFixed(0) + '%';
+    document.getElementById('liveMobile').textContent = s.mobile_count || 0;
+
+    // Render Student View cards
+    const students = s.students || [];
+    document.getElementById('lblInViewCount').textContent = students.length;
+    renderStudentViewCards(students);
+  };
+
+  function renderStudentViewCards(students) {
+    const container = document.getElementById('studentCardsContainer');
+    if (!students || students.length === 0) {
+      container.innerHTML = '<div style="color: var(--text-muted); font-size: .83rem; margin: auto;">Start live classroom monitoring to view active student cards</div>';
+      return;
+    }
+    
+    container.innerHTML = students.map(st => {
+      let badgeColor = '#22c55e';
+      let badgeLabel = 'Highly Attentive';
+      let avatarLetter = st.name ? st.name[0] : 'S';
+
+      if (st.distraction_score < 60) {
+        badgeColor = '#ef4444';
+        badgeLabel = 'Highly Distracted';
+      } else if (st.distraction_score < 80) {
+        badgeColor = '#f59e0b';
+        badgeLabel = 'Moderate Attention';
+      }
+
+      let poseLabel = st.head_pose || 'Forward';
+      let phoneLabel = st.mobile_detected ? 'YES' : 'No';
+      let phoneColor = st.mobile_detected ? 'var(--red)' : 'var(--text)';
+
+      const barColor = st.attention_pct >= 75 ? 'var(--green)' : st.attention_pct >= 50 ? 'var(--orange)' : 'var(--red)';
+
+      return `
+        <div class="student-card" style="border-color:${badgeColor}; min-width:180px; max-width:200px; flex-shrink:0;">
+          <div class="sc-header" style="background:${badgeColor}12; padding: 10px;">
+            <div class="user-avatar" style="width:26px; height:26px; font-size:.75rem; background:linear-gradient(135deg, ${badgeColor}, #2563eb);">${avatarLetter}</div>
+            <span class="sc-id" style="font-weight:700; font-size:.8rem;">${st.name || 'Student'}</span>
+          </div>
+          <div class="sc-body" style="padding: 10px; gap: 4px;">
+            <div class="sc-row"><span>Attention</span><strong>${st.attention_pct:.0f}%</strong></div>
+            <div class="sc-row"><span>Emotion</span><strong>${st.emotion}</strong></div>
+            <div class="sc-row"><span>Score</span><strong>${st.distraction_score}%</strong></div>
+            <div class="sc-row"><span>Head Pose</span><strong style="color:#2563eb;">${poseLabel}</strong></div>
+            <div class="sc-row"><span>Mobile</span><strong style="color:${phoneColor};">${phoneLabel}</strong></div>
+            <div style="margin-top: 6px; padding: 2px 0;"><span class="status-badge" style="background:${badgeColor}20; color:${badgeColor}; font-size:.65rem; padding: 2px 8px;">${badgeLabel}</span></div>
+          </div>
+          <div class="sc-bar-wrap"><div class="sc-bar" style="width:${st.attention_pct}%; background:${barColor}"></div></div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  async function loadAlertsList() {
+    const res = await fetch('/api/db-alerts?limit=5');
+    const data = await res.json();
+    const list = document.getElementById('recentAlertsList');
+    if (!data || data.length === 0) {
+      list.innerHTML = '<li class="alert-empty">No alerts yet</li>';
+      return;
+    }
+    list.innerHTML = data.map(a => `
+      <li class="alert-sleep" style="margin-bottom:6px; font-size:.8rem;">
+        🚨 ${a.message} <span style="float:right; font-size:.7rem; color:var(--text-muted);">${a.timestamp}</span>
+      </li>
+    `).join('');
+  }
+
+  function toggleFullscreen() {
+    const elem = document.getElementById("feedContainer");
+    if (!document.fullscreenElement) {
+      elem.requestFullscreen().catch(err => {
+        alert(`Error enabling fullscreen: ${err.message}`);
+      });
+    } else {
+      document.exitFullscreen();
+    }
+  }
+
+  window.addEventListener('load', () => {
+    initCharts();
+    loadAlertsList();
+    setInterval(loadAlertsList, 5000);
+  });
+</script>
+</body>
+</html>

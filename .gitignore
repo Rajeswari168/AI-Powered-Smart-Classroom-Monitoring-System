@@ -20,3 +20,7 @@ Thumbs.db
 model/*.onnx
 model/*.pt
 model/*.bin
+
+# Build files
+dist/
+build_static.py

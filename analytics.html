@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Analytics — Smart Classroom Attention Detector</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="static/css/style.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body class="app-body">
+
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">🎓</div>
+    <div class="logo-text">
+      <span class="logo-title">Smart Classroom<br/>Monitoring System</span>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <a href="dashboard.html"          class="nav-item"><span class="nav-icon">🏠</span><span>DASHBOARD</span></a>
+    <a href="live.html"    class="nav-item"><span class="nav-icon">📹</span><span>LIVE MONITORING</span></a>
+    <a href="students.html"           class="nav-item"><span class="nav-icon">👥</span><span>STUDENTS</span></a>
+    <a href="attendance.html"         class="nav-item"><span class="nav-icon">📅</span><span>ATTENDANCE</span></a>
+    <a href="attention_emotions.html" class="nav-item"><span class="nav-icon">🧠</span><span>ATTENTION & EMOTIONS</span></a>
+    <a href="mobile_detection.html"   class="nav-item"><span class="nav-icon">📱</span><span>MOBILE DETECTION</span></a>
+    <a href="distraction_score.html"  class="nav-item"><span class="nav-icon">🎯</span><span>DISTRACTION SCORE</span></a>
+    <a href="analytics.html"          class="nav-item active"><span class="nav-icon">📊</span><span>ANALYTICS</span></a>
+    <a href="reports.html"            class="nav-item"><span class="nav-icon">📋</span><span>REPORTS</span></a>
+    <a href="settings.html"           class="nav-item"><span class="nav-icon">⚙️</span><span>SETTINGS</span></a>
+  </nav>
+
+  <!-- Sidebar Date/Time Card -->
+  <div class="sidebar-datetime">
+    <div class="sidebar-date" id="sidebarDate">📅 -- --- ----</div>
+    <div class="sidebar-time" id="sidebarTime">00:00:00 AM</div>
+  </div>
+
+  <a href="index.html" class="sidebar-logout"><span>🚪</span> LOGOUT</a>
+</aside>
+
+<main class="main-content">
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+      <h1 class="page-title">Analytics Dashboard</h1>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-time" id="topbarTime"></div>
+      <div class="topbar-user"><div class="user-avatar">T</div><span>Teacher</span></div>
+    </div>
+  </header>
+
+  <!-- Top KPI cards -->
+  <section class="stat-cards">
+    <div class="stat-card card-green">
+      <div class="stat-icon-wrap">📈</div>
+      <div class="stat-info">
+        <div class="stat-value" id="aAvgAtt">--</div>
+        <div class="stat-label">Average Attention</div>
+        <div class="stat-trend">+5% from yesterday</div>
+      </div>
+    </div>
+    <div class="stat-card card-blue">
+      <div class="stat-icon-wrap">📅</div>
+      <div class="stat-info">
+        <div class="stat-value" id="aTotalSessions">12</div>
+        <div class="stat-label">Total Sessions</div>
+        <div class="stat-trend">This Week</div>
+      </div>
+    </div>
+    <div class="stat-card card-purple">
+      <div class="stat-icon-wrap">👥</div>
+      <div class="stat-info">
+        <div class="stat-value" id="aTotalStudents">30</div>
+        <div class="stat-label">Total Students</div>
+        <div class="stat-trend">Registered</div>
+      </div>
+    </div>
+    <div class="stat-card card-red">
+      <div class="stat-icon-wrap">🔔</div>
+      <div class="stat-info">
+        <div class="stat-value" id="aAlerts">0</div>
+        <div class="stat-label">Total Alerts</div>
+        <div class="stat-trend">This Week</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Charts row -->
+  <div class="panels-row">
+
+    <!-- Attention Trend line chart -->
+    <div class="panel" style="flex:2">
+      <div class="panel-header">
+        <div class="panel-title">📈 Attention Trend (Last 7 Days)</div>
+        <div style="display:flex;gap:8px">
+          <button class="btn-sm" onclick="exportTrendCSV()">⬇ Export</button>
+        </div>
+      </div>
+      <div style="padding:16px;height:280px">
+        <canvas id="trendChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Attention distribution donut -->
+    <div class="panel" style="min-width:240px">
+      <div class="panel-header"><div class="panel-title">🍩 Attention Distribution</div></div>
+      <div class="donut-wrap" style="padding:20px 0 8px">
+        <canvas id="emoDonut" width="160" height="160"></canvas>
+        <div class="donut-center">
+          <div class="donut-pct" id="donutPct">0%</div>
+          <div class="donut-lbl">Avg Attention</div>
+        </div>
+      </div>
+      <div class="donut-legend">
+        <div class="legend-item"><span class="dot dot-green"></span>Attentive <strong id="legAtt">78%</strong></div>
+        <div class="legend-item"><span class="dot dot-orange"></span>Distracted <strong id="legDis">15%</strong></div>
+        <div class="legend-item"><span class="dot dot-red"></span>Inactive <strong id="legSlp">7%</strong></div>
+      </div>
+    </div>
+
+    <!-- Top distracted students -->
+    <div class="panel" style="min-width:220px">
+      <div class="panel-header"><div class="panel-title">⚠ Top Distracted Students</div></div>
+      <div class="top-list" id="topList">
+        <div class="top-row"><span class="top-name">Rahul Sharma</span><div class="top-bar-wrap"><div class="top-bar" style="width:35%"></div></div><span class="top-pct">35%</span></div>
+        <div class="top-row"><span class="top-name">Priya Verma</span><div class="top-bar-wrap"><div class="top-bar" style="width:30%"></div></div><span class="top-pct">30%</span></div>
+        <div class="top-row"><span class="top-name">Amit Kumar</span><div class="top-bar-wrap"><div class="top-bar" style="width:28%"></div></div><span class="top-pct">28%</span></div>
+        <div class="top-row"><span class="top-name">Sneha Reddy</span><div class="top-bar-wrap"><div class="top-bar" style="width:25%"></div></div><span class="top-pct">25%</span></div>
+        <div class="top-row"><span class="top-name">Vikram Singh</span><div class="top-bar-wrap"><div class="top-bar" style="width:22%"></div></div><span class="top-pct">22%</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Live student status table -->
+  <div class="panel" style="margin:0 24px 20px">
+    <div class="panel-header">
+      <div class="panel-title">📋 Live Student Status</div>
+      <span id="liveTag" class="badge-live" style="display:none">LIVE</span>
+    </div>
+    <div style="overflow-x:auto">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>#</th><th>Student</th><th>Status</th><th>Emotion</th><th>Attention %</th><th>Drowsy</th>
+          </tr>
+        </thead>
+        <tbody id="studentTableBody">
+          <tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:20px">Start monitoring to see live student data</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+
+<script src="static/js/dashboard.js"></script>
+<script>
+  // Init analytics charts on load
+  initAnalyticsCharts();
+  function exportTrendCSV() {
+    if (!window._trendBuf) return;
+    const rows = [['Time','Attention %'],..._trendBuf.labels.map((l,i)=>[l,_trendBuf.vals[i]])];
+    const a = document.createElement('a');
+    a.href = 'data:text/csv,'+encodeURIComponent(rows.map(r=>r.join(',')).join('\n'));
+    a.download = 'attention_trend.csv'; a.click();
+  }
+</script>
+</body>
+</html>

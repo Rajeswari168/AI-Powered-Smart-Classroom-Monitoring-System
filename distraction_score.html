@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Distraction Score — Smart Classroom</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="static/css/style.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body class="app-body">
+
+<!-- ── Sidebar ── -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">🎓</div>
+    <div class="logo-text"><span class="logo-title">Smart Classroom<br/>Monitoring System</span></div>
+  </div>
+  <nav class="sidebar-nav">
+    <a href="dashboard.html"          class="nav-item"><span class="nav-icon">🏠</span><span>DASHBOARD</span></a>
+    <a href="live.html"    class="nav-item"><span class="nav-icon">📹</span><span>LIVE MONITORING</span></a>
+    <a href="students.html"           class="nav-item"><span class="nav-icon">👥</span><span>STUDENTS</span></a>
+    <a href="attendance.html"         class="nav-item"><span class="nav-icon">📅</span><span>ATTENDANCE</span></a>
+    <a href="attention_emotions.html" class="nav-item"><span class="nav-icon">🧠</span><span>ATTENTION & EMOTIONS</span></a>
+    <a href="mobile_detection.html"   class="nav-item"><span class="nav-icon">📱</span><span>MOBILE DETECTION</span></a>
+    <a href="distraction_score.html"  class="nav-item active"><span class="nav-icon">🎯</span><span>DISTRACTION SCORE</span></a>
+    <a href="analytics.html"          class="nav-item"><span class="nav-icon">📊</span><span>ANALYTICS</span></a>
+    <a href="reports.html"            class="nav-item"><span class="nav-icon">📋</span><span>REPORTS</span></a>
+    <a href="settings.html"           class="nav-item"><span class="nav-icon">⚙️</span><span>SETTINGS</span></a>
+  </nav>
+
+  <!-- Sidebar Date/Time Card -->
+  <div class="sidebar-datetime">
+    <div class="sidebar-date" id="sidebarDate">📅 -- --- ----</div>
+    <div class="sidebar-time" id="sidebarTime">00:00:00 AM</div>
+  </div>
+
+  <a href="index.html" class="sidebar-logout"><span>🚪</span> LOGOUT</a>
+</aside>
+
+<!-- ── Main Content ── -->
+<main class="main-content">
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+      <span style="font-size: .85rem; font-weight: 600; color: var(--text-2);">Smart Classroom Monitoring</span>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-time" id="topbarTime"></div>
+      <div class="topbar-user" style="border-left: 1px solid var(--border); padding-left: 12px; margin-left: 8px;">
+        <div class="user-avatar" style="width:28px; height:28px; font-size:.78rem;">T</div>
+        <span>Teacher</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Page Header & Filter Controls Row -->
+  <div style="margin: 20px 24px 8px; display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+    <div>
+      <h1 style="font-size: 1.35rem; font-weight: 800; color: var(--text); letter-spacing: -0.5px;">Distraction Score</h1>
+      <div style="font-size: .82rem; color: var(--text-muted); margin-top: 3px;">Analyze student distraction scores based on attention, head pose, emotions, and mobile phone usage</div>
+    </div>
+    <div style="display: flex; gap: 10px; align-items: center;">
+      <input type="date" id="distractionDate" class="search-input" style="width: 140px; padding: 6px 12px; font-size: .8rem;"/>
+      <select id="classSelect" class="setting-select" style="padding: 6px 12px; font-size: .8rem;">
+        <option value="AI & DS - A">AI & DS - A</option>
+      </select>
+      <button class="btn-action-primary" style="padding: 8px 16px; font-size: .8rem;">Export Report</button>
+    </div>
+  </div>
+
+  <!-- Top KPI Cards -->
+  <section class="stat-cards" style="padding-top:10px">
+    <div class="stat-card card-orange" style="border-left: 4px solid var(--orange);">
+      <div class="stat-icon-wrap" style="background: rgba(245,158,11,0.1); color: #f59e0b;">🎯</div>
+      <div class="stat-info">
+        <div class="stat-value" id="kpiAvgScore">65%</div>
+        <div class="stat-label">Average Distraction Score</div>
+        <div class="stat-trend" style="color: #f59e0b;">Moderate Attention</div>
+      </div>
+    </div>
+    <div class="stat-card card-red">
+      <div class="stat-icon-wrap" style="background: rgba(239,68,68,0.1); color: #ef4444;">📱</div>
+      <div class="stat-info">
+        <div class="stat-value" id="kpiMobileToday">2</div>
+        <div class="stat-label">Mobile Detections Today</div>
+        <div class="stat-trend" style="color: #ef4444;">Active monitoring</div>
+      </div>
+    </div>
+    <div class="stat-card card-blue">
+      <div class="stat-icon-wrap" style="background: rgba(37,99,235,0.1); color: #2563eb;">🧠</div>
+      <div class="stat-info">
+        <div class="stat-value">72%</div>
+        <div class="stat-label">Average Attention Score</div>
+        <div class="stat-trend" style="color: #64748b;">Daily Average</div>
+      </div>
+    </div>
+    <div class="stat-card card-green">
+      <div class="stat-icon-wrap" style="background: rgba(16,185,129,0.1); color: #10b981;">✅</div>
+      <div class="stat-info">
+        <div class="stat-value">8</div>
+        <div class="stat-label">Attentive Students</div>
+        <div class="stat-trend" style="color: #10b981;">Highly Attentive (80-100)</div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    // Set default date
+    document.getElementById('distractionDate').valueAsDate = new Date();
+  </script>
+
+  <!-- Row 2: Charts and Scoring Rules -->
+  <div class="panels-row">
+    <!-- Chart: Distraction Trend -->
+    <div class="panel" style="flex: 2; min-width: 320px;">
+      <div class="panel-header"><div class="panel-title">Distraction Score Trend (Today)</div></div>
+      <div style="padding: 16px; height: 220px;">
+        <canvas id="distOverTimeChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Scorer Info Panel -->
+    <div class="panel" style="flex: 1; min-width: 250px;">
+      <div class="panel-header"><div class="panel-title">Scoring Algorithm Logic</div></div>
+      <div style="padding: 14px 18px; font-size: .78rem; color: var(--text-2); display: flex; flex-direction: column; gap: 8px;">
+        <div style="background: var(--bg); padding: 8px 12px; border-radius: 6px;">
+          <strong style="color: var(--green);">Positive Factors:</strong>
+          <div style="display:flex; justify-content:space-between; margin-top:4px;"><span>Looking at Board</span><strong>+40</strong></div>
+          <div style="display:flex; justify-content:space-between;"><span>Happy or Neutral Emotion</span><strong>+20</strong></div>
+        </div>
+        <div style="background: var(--bg); padding: 8px 12px; border-radius: 6px;">
+          <strong style="color: var(--red);">Negative Factors:</strong>
+          <div style="display:flex; justify-content:space-between; margin-top:4px;"><span>Mobile Phone Detected</span><strong>-30</strong></div>
+          <div style="display:flex; justify-content:space-between;"><span>Looking Down (Head Pose)</span><strong>-20</strong></div>
+          <div style="display:flex; justify-content:space-between;"><span>Sleeping / Drowsy</span><strong>-40</strong></div>
+        </div>
+        <div style="background: var(--purple-bg); padding: 8px 12px; border-radius: 6px; text-align: center; font-weight: 600;">
+          Base Score Offset: +40 &nbsp;|&nbsp; Range: 0 - 100%
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 3: Leaderboards & Distribution -->
+  <div class="panels-row">
+    <!-- Attentive -->
+    <div class="panel" style="flex: 1; min-width: 240px;">
+      <div class="panel-header"><div class="panel-title">🏆 Most Attentive Students</div></div>
+      <div class="top-list" id="attList">
+        <!-- Populated via API -->
+      </div>
+    </div>
+
+    <!-- Distracted -->
+    <div class="panel" style="flex: 1; min-width: 240px;">
+      <div class="panel-header"><div class="panel-title">⚠ Most Distracted Students</div></div>
+      <div class="top-list" id="distList">
+        <!-- Populated via API -->
+      </div>
+    </div>
+
+    <!-- Donut Distribution -->
+    <div class="panel" style="flex: 1.1; min-width: 250px;">
+      <div class="panel-header"><div class="panel-title">Distraction Score Distribution</div></div>
+      <div class="donut-wrap" style="padding: 12px 0 6px;">
+        <canvas id="distDonut" width="130" height="130"></canvas>
+        <div class="donut-center">
+          <div class="donut-pct" style="font-size: 1.4rem; color: #f59e0b;">65%</div>
+          <div class="donut-lbl">Avg Score</div>
+        </div>
+      </div>
+      <div class="donut-legend" style="padding-bottom: 8px;">
+        <div class="legend-item"><span class="dot dot-green"></span>Highly Attentive (<strong id="distHigh">8</strong>)</div>
+        <div class="legend-item"><span class="dot dot-orange"></span>Moderate (<strong id="distMod">10</strong>)</div>
+        <div class="legend-item"><span class="dot dot-red"></span>Highly Distracted (<strong id="distLow">7</strong>)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 4: Student Details Table -->
+  <div class="panel" style="margin: 0 24px 20px;">
+    <div class="panel-header">
+      <div class="panel-title">Live Roster Attention Metrics</div>
+      <a href="/api/export-csv" class="btn-sm btn-refresh">⬇ Export csv</a>
+    </div>
+    <div style="overflow-x: auto;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Student</th>
+            <th>Class</th>
+            <th>Status</th>
+            <th>Head Pose</th>
+            <th>Mobile Usage</th>
+            <th>Attention %</th>
+            <th>Distraction Score</th>
+            <th>Label</th>
+          </tr>
+        </thead>
+        <tbody id="rosterTableBody">
+          <!-- Populated dynamically -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+
+<script src="static/js/dashboard.js"></script>
+<script>
+  let distOverTimeChart = null;
+  let distDonut = null;
+
+  function initCharts() {
+    distOverTimeChart = new Chart(document.getElementById('distOverTimeChart'), {
+      type: 'line',
+      data: {
+        labels: ['09:00', '10:00', '11:00', '12:00', '01:00', '02:00', '03:00', '04:00'],
+        datasets: [{
+          data: [62, 65, 68, 60, 63, 65, 61, 65],
+          borderColor: '#f59e0b',
+          backgroundColor: 'rgba(245,158,11,0.06)',
+          fill: true,
+          tension: 0.35,
+          pointRadius: 2
+        }]
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { min: 0, max: 100, grid: { color: '#e8ecf4' } },
+          x: { grid: { color: '#e8ecf4' } }
+        }
+      }
+    });
+
+    distDonut = new Chart(document.getElementById('distDonut'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Highly Attentive', 'Moderate', 'Highly Distracted'],
+        datasets: [{
+          data: [8, 10, 7],
+          backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+          borderWidth: 0
+        }]
+      },
+      options: { cutout: '65%', plugins: { legend: { display: false } } }
+    });
+  }
+
+  async function loadSummary() {
+    const res = await fetch('/api/distraction-summary');
+    const data = await res.json();
+
+    document.getElementById('kpiAvgScore').textContent = Math.round(data.avg_distraction_score) + '%';
+    document.getElementById('kpiMobileToday').textContent = data.mobile_today || 0;
+
+    // Load leaderboards
+    const attList = document.getElementById('attList');
+    if (data.most_attentive && data.most_attentive.length > 0) {
+      attList.innerHTML = data.most_attentive.map(s => `
+        <div class="top-row">
+          <span class="top-name">Student ${s.id + 1}</span>
+          <div class="top-bar-wrap"><div class="top-bar" style="width:${s.distraction_score}%; background:#10b981;"></div></div>
+          <span class="top-pct" style="color:#10b981;">${s.distraction_score}%</span>
+        </div>
+      `).join('');
+    } else {
+      attList.innerHTML = '<div style="color:var(--text-muted); font-size:.82rem;">No data yet</div>';
+    }
+
+    const distList = document.getElementById('distList');
+    if (data.most_distracted && data.most_distracted.length > 0) {
+      distList.innerHTML = data.most_distracted.map(s => `
+        <div class="top-row">
+          <span class="top-name">Student ${s.id + 1}</span>
+          <div class="top-bar-wrap"><div class="top-bar" style="width:${s.distraction_score}%; background:#ef4444;"></div></div>
+          <span class="top-pct" style="color:#ef4444;">${s.distraction_score}%</span>
+        </div>
+      `).join('');
+    } else {
+      distList.innerHTML = '<div style="color:var(--text-muted); font-size:.82rem;">No data yet</div>';
+    }
+  }
+
+  async function loadRoster() {
+    const res = await fetch('/api/db-students');
+    const data = await res.json();
+    
+    // Filter absent out
+    const present = data.filter(s => s.attendance_status === 'Present');
+    
+    const tbody = document.getElementById('rosterTableBody');
+    tbody.innerHTML = present.map(s => {
+      const isMob = s.mobile_usage === 'Yes'
+        ? '<span style="color:var(--red); font-weight:700;">📱 Yes</span>'
+        : '<span style="color:var(--text-muted);">No</span>';
+      
+      let badgeCls = 'status-good';
+      if (s.distraction_score < 60) badgeCls = 'status-bad';
+      else if (s.distraction_score < 80) badgeCls = 'status-warn';
+
+      const barColor = s.distraction_score >= 80 ? 'var(--green)' : s.distraction_score >= 60 ? 'var(--orange)' : 'var(--red)';
+
+      return `<tr>
+        <td><strong>Student ${s.id}</strong></td>
+        <td>${s.class}</td>
+        <td><span class="status-badge ${s.attention_score >= 75 ? 'status-good' : s.attention_score >= 50 ? 'status-warn' : 'status-bad'}">${s.attendance_status}</span></td>
+        <td>Forward</td>
+        <td>${isMob}</td>
+        <td><strong>${s.attention_score}%</strong></td>
+        <td>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="flex:1;background:var(--border);border-radius:4px;height:5px;width:80px;">
+              <div style="width:${s.distraction_score}%;height:5px;border-radius:4px;background:${barColor}"></div>
+            </div>
+            <strong>${s.distraction_score}%</strong>
+          </div>
+        </td>
+        <td><span class="status-badge ${badgeCls}">${s.status}</span></td>
+      </tr>`;
+    }).join('');
+  }
+
+  window.addEventListener('load', () => {
+    initCharts();
+    loadSummary();
+    loadRoster();
+  });
+</script>
+</body>
+</html>
