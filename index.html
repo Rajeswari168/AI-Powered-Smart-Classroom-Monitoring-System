@@ -34,9 +34,9 @@
       <h2>Welcome Back</h2>
       <p class="login-sub">Sign in to access your classroom dashboard</p>
 
-      {% if error %}
-      <div class="alert-error">⚠ {{ error }}</div>
-      {% endif %}
+      
+      <div class="alert-error" id="errorMsg" style="display: none; margin-bottom: 12px;">⚠ <span id="errorText">Invalid username or password</span></div>
+      
 
       <form method="POST" action="javascript:void(0)">
         <div class="form-group">
@@ -83,7 +83,12 @@
             if (u === 'teacher' && p === 'admin123') {
               window.location.href = 'dashboard.html';
             } else {
-              alert('Invalid credentials. Use teacher / admin123');
+              const err = document.getElementById('errorMsg');
+              if (err) {
+                err.style.display = 'block';
+                const txt = document.getElementById('errorText');
+                if (txt) txt.textContent = 'Invalid username or password. Use teacher / admin123';
+              }
             }
           });
         </script>
