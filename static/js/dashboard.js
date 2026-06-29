@@ -593,3 +593,218 @@ function stopWebcamSimulation() {
   const staticImg = document.getElementById('videoFeed');
   if (staticImg) staticImg.classList.remove('hidden');
 }
+
+
+// ── CLIENT-SIDE MOCK DATABASE & WEBCAM SIMULATOR FOR GITHUB PAGES ───────────────
+'use strict';
+
+const SEED_STUDENTS = [
+  {id: '21CS001', name: 'Ramesh Kumar', class: 'AI & DS - A', attendance_status: 'Present', attention_score: 85, emotion: 'Happy', mobile_usage: 'No', distraction_score: 82, status: 'Highly Attentive'},
+  {id: '21CS002', name: 'Priya Sharma', class: 'AI & DS - A', attendance_status: 'Present', attention_score: 45, emotion: 'Neutral', mobile_usage: 'Yes', distraction_score: 50, status: 'Highly Distracted'},
+  {id: '21CS003', name: 'Arjun Singh', class: 'AI & DS - A', attendance_status: 'Present', attention_score: 70, emotion: 'Happy', mobile_usage: 'No', distraction_score: 70, status: 'Moderate Attention'},
+  {id: '21CS004', name: 'Kavya Nair', class: 'AI & DS - A', attendance_status: 'Present', attention_score: 30, emotion: 'Sleepy', mobile_usage: 'No', distraction_score: 35, status: 'Highly Distracted'},
+  {id: '21CS005', name: 'Manoj Patel', class: 'AI & DS - A', attendance_status: 'Present', attention_score: 60, emotion: 'Neutral', mobile_usage: 'Yes', distraction_score: 60, status: 'Moderate Attention'},
+  {id: '21CS006', name: 'Sneha Reddy', class: 'AI & DS - A', attendance_status: 'Absent', attention_score: 0, emotion: '-', mobile_usage: 'No', distraction_score: 0, status: 'Absent'},
+  {id: '21CS007', name: 'Rahul Verma', class: 'AI & DS - A', attendance_status: 'Present', attention_score: 75, emotion: 'Happy', mobile_usage: 'No', distraction_score: 75, status: 'Moderate Attention'},
+  {id: '21CS008', name: 'Anjali Mehta', class: 'AI & DS - A', attendance_status: 'Present', attention_score: 40, emotion: 'Sad', mobile_usage: 'Yes', distraction_score: 45, status: 'Highly Distracted'},
+  {id: '21CS009', name: 'Deepa Nair', class: 'AI & DS - A', attendance_status: 'Present', attention_score: 88, emotion: 'Happy', mobile_usage: 'No', distraction_score: 90, status: 'Highly Attentive'},
+  {id: '21CS010', name: 'Karthik R', class: 'AI & DS - A', attendance_status: 'Present', attention_score: 73, emotion: 'Neutral', mobile_usage: 'No', distraction_score: 75, status: 'Moderate Attention'}
+];
+
+// Initialize localStorage DB
+if (!localStorage.getItem('db_students')) {
+  localStorage.setItem('db_students', JSON.stringify(SEED_STUDENTS));
+}
+if (!localStorage.getItem('db_alerts')) {
+  const seedAlerts = [
+    {message: 'Mobile phone detected for Priya Sharma', timestamp: '10:29:45 AM', type: 'mobile'},
+    {message: 'Arjun is looking down for long time', timestamp: '10:28:30 AM', type: 'pose'},
+    {message: 'Kavya is feeling sleepy', timestamp: '10:27:15 AM', type: 'sleep'}
+  ];
+  localStorage.setItem('db_alerts', JSON.stringify(seedAlerts));
+}
+
+// Intercept fetch calls for GitHub Pages client-side demo
+if (window.location.hostname.includes('github.io') || window.location.hostname.includes('rajeswari168.github.io')) {
+  const originalFetch = window.fetch;
+  window.fetch = async function(url, options) {
+    const getDB = (k) => JSON.parse(localStorage.getItem(k));
+    const setDB = (k, v) => localStorage.setItem(k, JSON.stringify(v));
+
+    // 1. Get Roster
+    if (url.includes('/api/db-students')) {
+      let list = getDB('db_students');
+      return new Response(JSON.stringify(list), { status: 200 });
+    }
+
+    // 2. Add Student
+    if (url.includes('/api/add-student')) {
+      const data = JSON.parse(options.body);
+      let list = getDB('db_students');
+      if (list.some(s => s.id === data.id)) {
+        return new Response(JSON.stringify({success:false, error:'Student ID already exists'}), { status: 200 });
+      }
+      list.push({
+        id: data.id, name: data.name, class: data.class,
+        attendance_status: 'Present', attention_score: 0, emotion: 'Neutral',
+        mobile_usage: 'No', distraction_score: 0, status: 'Moderate Attention'
+      });
+      setDB('db_students', list);
+      return new Response(JSON.stringify({success:true}), { status: 200 });
+    }
+
+    // 3. Alerts
+    if (url.includes('/api/db-alerts')) {
+      let list = getDB('db_alerts');
+      return new Response(JSON.stringify(list), { status: 200 });
+    }
+
+    // 4. Attendance list
+    if (url.includes('/api/db-attendance')) {
+      let list = getDB('db_students');
+      let att = list.map(s => ({
+        student_id: s.id, name: s.name, class: s.class, status: s.attendance_status === 'Present' ? 'Present' : 'Absent',
+        check_in: s.attendance_status === 'Present' ? '09:00:15 AM' : '--', check_out: '--', duration: '--'
+      }));
+      return new Response(JSON.stringify(att), { status: 200 });
+    }
+
+    // 5. Mobile detections list
+    if (url.includes('/api/db-mobile-detections')) {
+      let list = getDB('db_students');
+      let dets = list.filter(s => s.mobile_usage === 'Yes').map(s => ({
+        student_id: s.id, name: s.name, class: s.class, camera: 'Camera 1', time: '10:29:45 AM'
+      }));
+      return new Response(JSON.stringify(dets), { status: 200 });
+    }
+
+    // 6. Start/Stop monitoring
+    if (url.includes('/api/start')) {
+      startWebcamSimulation();
+      return new Response(JSON.stringify({status:'started'}), { status: 200 });
+    }
+    if (url.includes('/api/stop')) {
+      stopWebcamSimulation();
+      return new Response(JSON.stringify({status:'stopped'}), { status: 200 });
+    }
+
+    // 7. Stats fallback
+    if (url.includes('/api/stats') || url.includes('/api/distraction-summary')) {
+      let list = getDB('db_students');
+      let present = list.filter(s => s.attendance_status === 'Present');
+      let avgAtt = present.reduce((acc,s)=>acc+s.attention_score,0)/present.length || 70;
+      let avgDist = present.reduce((acc,s)=>acc+s.distraction_score,0)/present.length || 65;
+      let mobCount = list.filter(s => s.mobile_usage === 'Yes').length;
+      return new Response(JSON.stringify({
+        total_students: present.length, focused: present.filter(s=>s.attention_score>=75).length,
+        distracted: present.filter(s=>s.attention_score<75).length, sleeping: 0,
+        attention_pct: avgAtt, avg_distraction_score: avgDist, mobile_count: mobCount,
+        mobile_today: mobCount, most_attentive: present.slice(0,3), most_distracted: present.slice(3,6),
+        students: present.map(s => ({
+          id: s.id, name: s.name, attention_pct: s.attention_score, emotion: s.emotion,
+          distraction_score: s.distraction_score, status: s.status, head_pose: 'Forward', mobile_detected: s.mobile_usage === 'Yes'
+        }))
+      }), { status: 200 });
+    }
+
+    return originalFetch(url, options);
+  };
+
+  // Override start/stop monitoring
+  window.startMonitoring = startWebcamSimulation;
+  window.stopMonitoring = stopWebcamSimulation;
+}
+
+// Simulated Webcam Overlays
+let webcamStream = null;
+let overlayCanvas = null;
+let overlayInterval = null;
+
+async function startWebcamSimulation() {
+  const container = document.getElementById('feedContainer');
+  if (!container) return;
+
+  // Add canvas and video elements
+  let video = document.getElementById('mockVideo');
+  if (!video) {
+    video = document.createElement('video');
+    video.id = 'mockVideo';
+    video.autoplay = true;
+    video.playsInline = true;
+    video.style.width = '100%';
+    video.style.height = '100%';
+    video.style.objectFit = 'cover';
+    container.appendChild(video);
+  }
+
+  if (!overlayCanvas) {
+    overlayCanvas = document.createElement('canvas');
+    overlayCanvas.style.position = 'absolute';
+    overlayCanvas.style.top = '0';
+    overlayCanvas.style.left = '0';
+    overlayCanvas.style.width = '100%';
+    overlayCanvas.style.height = '100%';
+    overlayCanvas.style.pointerEvents = 'none';
+    container.appendChild(overlayCanvas);
+  }
+
+  // Hide static image
+  const staticImg = document.getElementById('videoFeed');
+  if (staticImg) staticImg.classList.add('hidden');
+
+  try {
+    webcamStream = await navigator.mediaDevices.getUserMedia({ video: true });
+    video.srcObject = webcamStream;
+    
+    // Draw mock bounding boxes on the canvas overlay
+    const ctx = overlayCanvas.getContext('2d');
+    overlayInterval = setInterval(() => {
+      overlayCanvas.width = video.videoWidth || 640;
+      overlayCanvas.height = video.videoHeight || 480;
+      ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+
+      if (overlayCanvas.width > 100) {
+        // Draw a simulated face box centered
+        ctx.strokeStyle = '#10b981';
+        ctx.lineWidth = 3;
+        const w = 150, h = 180;
+        const x = (overlayCanvas.width - w) / 2;
+        const y = (overlayCanvas.height - h) / 2;
+        ctx.strokeRect(x, y, w, h);
+
+        // Header block
+        ctx.fillStyle = '#10b981';
+        ctx.fillRect(x, y - 55, w, 55);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '12px Arial';
+        ctx.fillText('You (Demo)', x + 8, y - 40);
+        ctx.fillText('Attention: 88%', x + 8, y - 26);
+        ctx.fillText('Emotion: Happy', x + 8, y - 12);
+      }
+    }, 100);
+
+  } catch (err) {
+    console.warn("Webcam access not allowed, fallback to image:", err);
+  }
+}
+
+function stopWebcamSimulation() {
+  if (webcamStream) {
+    webcamStream.getTracks().forEach(t => t.stop());
+    webcamStream = null;
+  }
+  if (overlayInterval) {
+    clearInterval(overlayInterval);
+    overlayInterval = null;
+  }
+  if (overlayCanvas) {
+    overlayCanvas.remove();
+    overlayCanvas = null;
+  }
+  const video = document.getElementById('mockVideo');
+  if (video) video.remove();
+
+  const staticImg = document.getElementById('videoFeed');
+  if (staticImg) staticImg.classList.remove('hidden');
+}
