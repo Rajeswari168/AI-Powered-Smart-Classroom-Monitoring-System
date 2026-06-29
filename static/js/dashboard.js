@@ -808,3 +808,270 @@ function stopWebcamSimulation() {
   const staticImg = document.getElementById('videoFeed');
   if (staticImg) staticImg.classList.remove('hidden');
 }
+
+
+// ── CLIENT-SIDE MOCK DATABASE & WEBCAM SIMULATOR FOR GITHUB PAGES ───────────────
+'use strict';
+
+const SEED_STUDENTS = [
+  {id: '21CS001', name: 'Ramesh Kumar', class: 'AI & DS - A', attendance_status: 'Present', attention_score: 85, emotion: 'Happy', mobile_usage: 'No', distraction_score: 82, status: 'Highly Attentive'},
+  {id: '21CS002', name: 'Priya Sharma', class: 'AI & DS - A', attendance_status: 'Present', attention_score: 45, emotion: 'Neutral', mobile_usage: 'Yes', distraction_score: 50, status: 'Highly Distracted'},
+  {id: '21CS003', name: 'Arjun Singh', class: 'AI & DS - A', attendance_status: 'Present', attention_score: 70, emotion: 'Happy', mobile_usage: 'No', distraction_score: 70, status: 'Moderate Attention'},
+  {id: '21CS004', name: 'Kavya Nair', class: 'AI & DS - A', attendance_status: 'Present', attention_score: 30, emotion: 'Sleepy', mobile_usage: 'No', distraction_score: 35, status: 'Highly Distracted'},
+  {id: '21CS005', name: 'Manoj Patel', class: 'AI & DS - A', attendance_status: 'Present', attention_score: 60, emotion: 'Neutral', mobile_usage: 'Yes', distraction_score: 60, status: 'Moderate Attention'},
+  {id: '21CS006', name: 'Sneha Reddy', class: 'AI & DS - A', attendance_status: 'Absent', attention_score: 0, emotion: '-', mobile_usage: 'No', distraction_score: 0, status: 'Absent'},
+  {id: '21CS007', name: 'Rahul Verma', class: 'AI & DS - A', attendance_status: 'Present', attention_score: 75, emotion: 'Happy', mobile_usage: 'No', distraction_score: 75, status: 'Moderate Attention'},
+  {id: '21CS008', name: 'Anjali Mehta', class: 'AI & DS - A', attendance_status: 'Present', attention_score: 40, emotion: 'Sad', mobile_usage: 'Yes', distraction_score: 45, status: 'Highly Distracted'},
+  {id: '21CS009', name: 'Deepa Nair', class: 'AI & DS - A', attendance_status: 'Present', attention_score: 88, emotion: 'Happy', mobile_usage: 'No', distraction_score: 90, status: 'Highly Attentive'},
+  {id: '21CS010', name: 'Karthik R', class: 'AI & DS - A', attendance_status: 'Present', attention_score: 73, emotion: 'Neutral', mobile_usage: 'No', distraction_score: 75, status: 'Moderate Attention'}
+];
+
+// Initialize localStorage DB
+if (!localStorage.getItem('db_students')) {
+  localStorage.setItem('db_students', JSON.stringify(SEED_STUDENTS));
+}
+if (!localStorage.getItem('db_alerts')) {
+  const seedAlerts = [
+    {message: 'Mobile phone detected for Priya Sharma', timestamp: '10:29:45 AM', type: 'mobile'},
+    {message: 'Arjun is looking down for long time', timestamp: '10:28:30 AM', type: 'pose'},
+    {message: 'Kavya is feeling sleepy', timestamp: '10:27:15 AM', type: 'sleep'}
+  ];
+  localStorage.setItem('db_alerts', JSON.stringify(seedAlerts));
+}
+
+// Intercept fetch calls for GitHub Pages client-side demo
+if (window.location.hostname.includes('github.io') || window.location.hostname.includes('rajeswari168.github.io')) {
+  const originalFetch = window.fetch;
+  window.fetch = async function(url, options) {
+    const getDB = (k) => JSON.parse(localStorage.getItem(k));
+    const setDB = (k, v) => localStorage.setItem(k, JSON.stringify(v));
+
+    // 1. Get Roster
+    if (url.includes('/api/db-students')) {
+      let list = getDB('db_students');
+      return new Response(JSON.stringify(list), { status: 200 });
+    }
+
+    // 2. Add Student
+    if (url.includes('/api/add-student')) {
+      const data = JSON.parse(options.body);
+      let list = getDB('db_students');
+      if (list.some(s => s.id === data.id)) {
+        return new Response(JSON.stringify({success:false, error:'Student ID already exists'}), { status: 200 });
+      }
+      list.push({
+        id: data.id, name: data.name, class: data.class,
+        attendance_status: 'Present', attention_score: 0, emotion: 'Neutral',
+        mobile_usage: 'No', distraction_score: 0, status: 'Moderate Attention'
+      });
+      setDB('db_students', list);
+      return new Response(JSON.stringify({success:true}), { status: 200 });
+    }
+
+    // 3. Alerts
+    if (url.includes('/api/db-alerts')) {
+      let list = getDB('db_alerts');
+      return new Response(JSON.stringify(list), { status: 200 });
+    }
+
+    // 4. Attendance list
+    if (url.includes('/api/db-attendance')) {
+      let list = getDB('db_students');
+      let att = list.map(s => ({
+        student_id: s.id, name: s.name, class: s.class, status: s.attendance_status === 'Present' ? 'Present' : 'Absent',
+        check_in: s.attendance_status === 'Present' ? '09:00:15 AM' : '--', check_out: '--', duration: '--'
+      }));
+      return new Response(JSON.stringify(att), { status: 200 });
+    }
+
+    // 5. Mobile detections list
+    if (url.includes('/api/db-mobile-detections')) {
+      let list = getDB('db_students');
+      let dets = list.filter(s => s.mobile_usage === 'Yes').map(s => ({
+        student_id: s.id, name: s.name, class: s.class, camera: 'Camera 1', time: '10:29:45 AM'
+      }));
+      return new Response(JSON.stringify(dets), { status: 200 });
+    }
+
+    // 6. Start/Stop monitoring
+    if (url.includes('/api/start')) {
+      startWebcamSimulation();
+      return new Response(JSON.stringify({status:'started'}), { status: 200 });
+    }
+    if (url.includes('/api/stop')) {
+      stopWebcamSimulation();
+      return new Response(JSON.stringify({status:'stopped'}), { status: 200 });
+    }
+
+    // 7. Stats fallback
+    if (url.includes('/api/stats') || url.includes('/api/distraction-summary')) {
+      return new Response(JSON.stringify(getMockStats()), { status: 200 });
+    }
+
+    return originalFetch(url, options);
+  };
+
+  // Override start/stop monitoring
+  window.startMonitoring = startWebcamSimulation;
+  window.stopMonitoring = stopWebcamSimulation;
+  
+  // Fake SSE simulation loop
+  setInterval(() => {
+    if (window.monitoringActive) {
+      applyStats(getMockStats());
+      
+      // Update timer labels
+      updateMonTimer();
+    }
+  }, 1000);
+}
+
+function getMockStats() {
+  const getDB = (k) => JSON.parse(localStorage.getItem(k));
+  let list = getDB('db_students');
+  let present = list.filter(s => s.attendance_status === 'Present');
+  let focused = present.filter(s => s.attention_score >= 70).length;
+  let distracted = present.filter(s => s.attention_score < 70 && s.mobile_usage === 'No').length;
+  let sleeping = present.filter(s => s.attention_score < 40 && s.mobile_usage === 'No').length;
+  let mobCount = list.filter(s => s.mobile_usage === 'Yes').length;
+  
+  // Dynamic fluctuations
+  present.forEach(s => {
+    s.attention_score = Math.min(100, Math.max(30, s.attention_score + Math.floor(Math.random() * 11) - 5));
+    s.distraction_score = 100 - s.attention_score;
+  });
+  
+  let avgAtt = present.reduce((acc,s)=>acc+s.attention_score,0)/present.length || 70;
+  let avgDist = present.reduce((acc,s)=>acc+s.distraction_score,0)/present.length || 65;
+
+  return {
+    total_students: present.length, focused, distracted, sleeping,
+    attention_pct: avgAtt, avg_distraction_score: avgDist, mobile_count: mobCount,
+    mobile_today: mobCount, most_attentive: present.slice(0,3), most_distracted: present.slice(3,6),
+    students: present.map(s => ({
+      id: s.id, name: s.name, attention_pct: s.attention_score, emotion: s.emotion,
+      distraction_score: s.distraction_score, status: s.attention_score >= 75 ? 'Focused' : s.attention_score >= 50 ? 'Distracted' : 'Sleeping',
+      head_pose: 'Forward', mobile_detected: s.mobile_usage === 'Yes'
+    }))
+  };
+}
+
+// Simulated Webcam Overlays
+let webcamStream = null;
+let overlayCanvas = null;
+let overlayInterval = null;
+
+async function startWebcamSimulation() {
+  const container = document.getElementById('feedContainer');
+  if (!container) return;
+
+  // Add canvas and video elements
+  let video = document.getElementById('mockVideo');
+  if (!video) {
+    video = document.createElement('video');
+    video.id = 'mockVideo';
+    video.autoplay = true;
+    video.playsInline = true;
+    video.muted = true;
+    video.style.width = '100%';
+    video.style.height = '100%';
+    video.style.objectFit = 'cover';
+    container.appendChild(video);
+  }
+
+  if (!overlayCanvas) {
+    overlayCanvas = document.createElement('canvas');
+    overlayCanvas.id = 'mockOverlay';
+    overlayCanvas.style.position = 'absolute';
+    overlayCanvas.style.top = '0';
+    overlayCanvas.style.left = '0';
+    overlayCanvas.style.width = '100%';
+    overlayCanvas.style.height = '100%';
+    overlayCanvas.style.pointerEvents = 'none';
+    container.appendChild(overlayCanvas);
+  }
+
+  // Hide static image
+  const staticImg = document.getElementById('videoFeed');
+  if (staticImg) staticImg.classList.add('hidden');
+  
+  const ph = document.getElementById('feedPlaceholder');
+  if (ph) ph.style.display = 'none';
+
+  // Toggle button classes
+  const btnStart = document.getElementById('btnStart');
+  const btnStop = document.getElementById('btnStop');
+  if (btnStart) btnStart.classList.add('hidden');
+  if (btnStop) btnStop.classList.remove('hidden');
+  window.monitoringActive = true;
+
+  try {
+    webcamStream = await navigator.mediaDevices.getUserMedia({ video: true });
+    video.srcObject = webcamStream;
+  } catch (err) {
+    console.warn("Webcam access not allowed, running simulated classroom feed:", err);
+  }
+
+  // Run overlay loops
+  const ctx = overlayCanvas.getContext('2d');
+  overlayInterval = setInterval(() => {
+    overlayCanvas.width = video.videoWidth || 640;
+    overlayCanvas.height = video.videoHeight || 480;
+    ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+
+    if (overlayCanvas.width > 100) {
+      // Draw 3 simulated student tracking boxes
+      const boxes = [
+        {name: 'Ramesh (You)', x: 100, y: 120, w: 110, h: 130, color: '#10b981', att: '88%', emo: 'Happy'},
+        {name: 'Priya', x: 280, y: 150, w: 105, h: 125, color: '#ef4444', att: '42%', emo: 'Distracted (Phone)'},
+        {name: 'Arjun', x: 440, y: 130, w: 100, h: 120, color: '#f59e0b', att: '65%', emo: 'Neutral'}
+      ];
+
+      boxes.forEach(b => {
+        ctx.strokeStyle = b.color;
+        ctx.lineWidth = 3;
+        ctx.strokeRect(b.x, b.y, b.w, b.h);
+
+        // Header block
+        ctx.fillStyle = b.color;
+        ctx.fillRect(b.x, b.y - 45, b.w, 45);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 9px Inter, sans-serif';
+        ctx.fillText(b.name, b.x + 6, b.y - 32);
+        ctx.font = '8px Inter, sans-serif';
+        ctx.fillText('Att: ' + b.att, b.x + 6, b.y - 20);
+        ctx.fillText('Emo: ' + b.emo, b.x + 6, b.y - 8);
+      });
+    }
+  }, 100);
+}
+
+function stopWebcamSimulation() {
+  if (webcamStream) {
+    webcamStream.getTracks().forEach(t => t.stop());
+    webcamStream = null;
+  }
+  if (overlayInterval) {
+    clearInterval(overlayInterval);
+    overlayInterval = null;
+  }
+  if (overlayCanvas) {
+    overlayCanvas.remove();
+    overlayCanvas = null;
+  }
+  const video = document.getElementById('mockVideo');
+  if (video) video.remove();
+
+  const staticImg = document.getElementById('videoFeed');
+  if (staticImg) staticImg.classList.add('hidden');
+
+  const ph = document.getElementById('feedPlaceholder');
+  if (ph) ph.style.display = 'flex';
+
+  const btnStart = document.getElementById('btnStart');
+  const btnStop = document.getElementById('btnStop');
+  if (btnStart) btnStart.classList.remove('hidden');
+  if (btnStop) btnStop.classList.add('hidden');
+  window.monitoringActive = false;
+}
