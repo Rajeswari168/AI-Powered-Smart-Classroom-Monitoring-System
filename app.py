@@ -9,7 +9,7 @@ NEW (v3):
   - /api/export-csv       : enhanced CSV with distraction_score column
 """
 
-import cv2, json, time, os, threading, io, csv
+import cv2, json, time, os, threading, io, csv, base64
 from datetime import datetime, date
 from functools import wraps
 from flask import (Flask, Response, render_template, jsonify,
@@ -384,15 +384,39 @@ def api_db_mobile_detections():
 @app.route('/api/add-student', methods=['POST'])
 @login_required
 def api_add_student():
-    """Add a new student to the database roster."""
+    """Add a new student to the database roster and save their face photo."""
     data = request.json or {}
     sid = data.get('id')
     name = data.get('name')
-    cls = data.get('class', 'AI & DS - A')
+    dept = data.get('department', '').strip()
+    sect = data.get('section', '').strip()
+    face_image_b64 = data.get('face_image')  # base64 string
+    
     if not sid or not name:
         return jsonify({'success': False, 'error': 'Missing ID or Name'}), 400
     
-    success = database.add_student(sid, name, cls)
+    cls = f"{dept} - {sect}" if (dept and sect) else (dept or sect or 'AI & DS - A')
+    
+    photo_url = 'avatar.jpg'
+    if face_image_b64 and ',' in face_image_b64:
+        try:
+            # Create uploads directory if not exists
+            faces_dir = os.path.join(app.static_folder, 'uploads', 'faces')
+            os.makedirs(faces_dir, exist_ok=True)
+            
+            # Decode base64
+            img_data = base64.b64decode(face_image_b64.split(',')[1])
+            file_name = f"{sid}.jpg"
+            file_path = os.path.join(faces_dir, file_name)
+            
+            with open(file_path, 'wb') as f:
+                f.write(img_data)
+                
+            photo_url = f"/static/uploads/faces/{file_name}"
+        except Exception as e:
+            print(f"[ERROR] Failed to save face photo: {e}")
+            
+    success = database.add_student(sid, name, cls, photo_url=photo_url)
     if success:
         return jsonify({'success': True})
     else:

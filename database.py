@@ -195,14 +195,14 @@ def update_student_stats(sid, attention, emotion, mobile, distraction, status):
     conn.commit()
     conn.close()
 
-def add_student(sid, name, cls, status='Present'):
+def add_student(sid, name, cls, status='Present', photo_url='avatar.jpg'):
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
         cursor.execute('''
             INSERT INTO students (id, name, class, attendance_status, attention_score, emotion, mobile_usage, distraction_score, status, photo_url)
-            VALUES (?, ?, ?, ?, 0, 'Neutral', 'No', 0, 'Moderate Attention', 'avatar.jpg')
-        ''', (sid, name, cls, status))
+            VALUES (?, ?, ?, ?, 0, 'Neutral', 'No', 0, 'Moderate Attention', ?)
+        ''', (sid, name, cls, status, photo_url))
         conn.commit()
         success = True
     except sqlite3.IntegrityError:

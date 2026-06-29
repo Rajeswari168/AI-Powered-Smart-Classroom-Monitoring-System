@@ -181,11 +181,12 @@
 
 </main>
 
-<!-- Add Student Modal -->
-<div class="modal" id="addStudentModal">
-  <div class="modal-content">
-    <div class="modal-header">Add New Student</div>
-    <div class="form-group">
+<!-- Add Student Modal (With Department, Section & Face Registration) -->
+<div class="modal" id="addStudentModal" style="display:none;">
+  <div class="modal-content" style="width:450px;">
+    <div class="modal-header">Add New Student & Register Face</div>
+    
+    <div class="form-group" style="margin-top:4px;">
       <label>Student ID</label>
       <input type="text" id="newStudentId" class="search-input" placeholder="e.g. 21CS026"/>
     </div>
@@ -193,16 +194,40 @@
       <label>Full Name</label>
       <input type="text" id="newStudentName" class="search-input" placeholder="e.g. Ranbir Kapoor"/>
     </div>
-    <div class="form-group">
-      <label>Class</label>
-      <select id="newStudentClass" class="setting-select">
-        <option value="AI & DS - A">AI & DS - A</option>
-        <option value="AI & DS - B">AI & DS - B</option>
-      </select>
+    
+    <div style="display:flex; gap:10px;">
+      <div class="form-group" style="flex:1;">
+        <label>Department</label>
+        <input type="text" id="newStudentDept" class="search-input" placeholder="e.g. CSE, AI & DS"/>
+      </div>
+      <div class="form-group" style="flex:1;">
+        <label>Section</label>
+        <input type="text" id="newStudentSection" class="search-input" placeholder="e.g. A, B"/>
+      </div>
     </div>
+
+    <!-- Face Registration Section -->
+    <div class="form-group" style="margin-top:8px;">
+      <label>Face Registration / Enrollment</label>
+      <div style="display:flex; flex-direction:column; align-items:center; gap:8px; background:#f8fafc; border:1px dashed var(--border); border-radius:8px; padding:12px;">
+        <!-- Camera View/Preview -->
+        <div id="enrollCameraContainer" style="width:100%; height:160px; background:#000; border-radius:6px; overflow:hidden; display:none; justify-content:center; align-items:center; position:relative;">
+          <video id="enrollVideo" autoplay playsinline muted style="width:100%; height:100%; object-fit:cover;"></video>
+        </div>
+        <div id="enrollPhotoPreview" style="width:120px; height:120px; border-radius:6px; overflow:hidden; background:var(--border); display:none; justify-content:center; align-items:center;">
+          <img id="enrollImg" style="width:100%; height:100%; object-fit:cover;" />
+        </div>
+        
+        <div style="display:flex; gap:8px;">
+          <button type="button" class="btn-sm" id="btnStartEnrollCam" onclick="startEnrollCamera()" style="border-color:var(--accent); color:var(--accent); font-weight:600;">📷 Open Camera</button>
+          <button type="button" class="btn-sm hidden" id="btnCaptureEnroll" onclick="captureEnrollPhoto()" style="background:var(--accent); color:white; border-color:var(--accent); font-weight:600;">📸 Capture Photo</button>
+        </div>
+      </div>
+    </div>
+
     <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 8px;">
       <button class="btn-sm" onclick="closeAddModal()">Cancel</button>
-      <button class="btn-action-primary" onclick="submitAddStudent()">Save</button>
+      <button class="btn-action-primary" onclick="submitAddStudent()">Save & Enroll</button>
     </div>
   </div>
 </div>
@@ -264,7 +289,11 @@
 
       return `<tr>
         <td><strong>${s.id}</strong></td>
-        <td><div class="user-avatar" style="width:28px; height:28px; font-size:.78rem;">${s.name[0]}</div></td>
+        <td>
+          <img src="${s.photo_url && (s.photo_url.startsWith('/') || s.photo_url.startsWith('http') || s.photo_url.includes('data:image')) ? s.photo_url : ('/static/uploads/faces/' + s.id + '.jpg')}" 
+               onerror="this.outerHTML='<div class=\"user-avatar\" style=\"width:28px; height:28px; font-size:.78rem;\">${s.name[0]}</div>'" 
+               style="width:28px; height:28px; border-radius:50%; object-fit:cover; display:block;" />
+        </td>
         <td><strong>${s.name}</strong></td>
         <td>${s.class}</td>
         <td><span class="status-badge ${attCls}">${s.attendance_status}</span></td>
@@ -283,25 +312,106 @@
     }).join('');
   }
 
+  let enrollStream = null;
+  let capturedFaceBase64 = null;
+
   function openAddModal() {
+    capturedFaceBase64 = null;
+    document.getElementById('newStudentId').value = '';
+    document.getElementById('newStudentName').value = '';
+    document.getElementById('newStudentDept').value = '';
+    document.getElementById('newStudentSection').value = '';
+    
+    document.getElementById('enrollCameraContainer').style.display = 'none';
+    document.getElementById('enrollPhotoPreview').style.display = 'none';
+    
+    const btnStart = document.getElementById('btnStartEnrollCam');
+    btnStart.classList.remove('hidden');
+    btnStart.textContent = '📷 Open Camera';
+    document.getElementById('btnCaptureEnroll').classList.add('hidden');
+    
     document.getElementById('addStudentModal').style.display = 'flex';
   }
+  
   function closeAddModal() {
+    if (enrollStream) {
+      enrollStream.getTracks().forEach(t => t.stop());
+      enrollStream = null;
+    }
     document.getElementById('addStudentModal').style.display = 'none';
   }
 
+  async function startEnrollCamera() {
+    const container = document.getElementById('enrollCameraContainer');
+    const video = document.getElementById('enrollVideo');
+    const btnStart = document.getElementById('btnStartEnrollCam');
+    const btnCap = document.getElementById('btnCaptureEnroll');
+    const preview = document.getElementById('enrollPhotoPreview');
+
+    preview.style.display = 'none';
+    container.style.display = 'flex';
+    
+    try {
+      enrollStream = await navigator.mediaDevices.getUserMedia({ video: { width: 320, height: 240 } });
+      video.srcObject = enrollStream;
+      
+      btnStart.classList.add('hidden');
+      btnCap.classList.remove('hidden');
+    } catch (err) {
+      alert('Webcam access failed: ' + err.message);
+    }
+  }
+
+  function captureEnrollPhoto() {
+    const video = document.getElementById('enrollVideo');
+    const preview = document.getElementById('enrollPhotoPreview');
+    const img = document.getElementById('enrollImg');
+    const container = document.getElementById('enrollCameraContainer');
+    const btnStart = document.getElementById('btnStartEnrollCam');
+    const btnCap = document.getElementById('btnCaptureEnroll');
+
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth || 320;
+    canvas.height = video.videoHeight || 240;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+    capturedFaceBase64 = canvas.toDataURL('image/jpeg');
+    img.src = capturedFaceBase64;
+    
+    if (enrollStream) {
+      enrollStream.getTracks().forEach(t => t.stop());
+      enrollStream = null;
+    }
+    
+    container.style.display = 'none';
+    preview.style.display = 'flex';
+    btnStart.classList.remove('hidden');
+    btnStart.textContent = '🔄 Retake Photo';
+    btnCap.classList.add('hidden');
+  }
+
   async function submitAddStudent() {
-    const sid = document.getElementById('newStudentId').value;
-    const name = document.getElementById('newStudentName').value;
-    const cls = document.getElementById('newStudentClass').value;
+    const sid = document.getElementById('newStudentId').value.trim();
+    const name = document.getElementById('newStudentName').value.trim();
+    const dept = document.getElementById('newStudentDept').value.trim();
+    const sect = document.getElementById('newStudentSection').value.trim();
+    
     if (!sid || !name) {
       alert('Please fill out student ID and Name.');
       return;
     }
+    
     const res = await fetch('/api/add-student', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: sid, name: name, class: cls })
+      body: JSON.stringify({ 
+        id: sid, 
+        name: name, 
+        department: dept, 
+        section: sect,
+        face_image: capturedFaceBase64 
+      })
     });
     const result = await res.json();
     if (result.success) {
