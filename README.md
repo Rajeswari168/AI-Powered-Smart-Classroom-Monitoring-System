@@ -1,10 +1,10 @@
-# 🎓 Smart Classroom Attention Detector
+# Smart Classroom Attention Detector
 
 An AI-powered real-time classroom monitoring system built with Python, OpenCV, DeepFace, and Flask.
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### 1. Install dependencies
 ```bash
@@ -23,16 +23,17 @@ http://localhost:5000
 ```
 
 ### 4. Login
-| Field    | Value      |
-|----------|------------|
-| Username | `teacher`  |
+
+| Field | Value |
+|-------|-------|
+| Username | `teacher` |
 | Password | `admin123` |
 
 ---
 
-## 📁 Folder Structure
+## Folder Structure
 
-```
+```text
 Mini project/
 │
 ├── app.py                    ← Flask server (main entry point)
@@ -56,36 +57,38 @@ Mini project/
 
 ---
 
-## 🤖 How the AI Works
+## How the AI Works
 
 | Feature | Method |
 |---------|--------|
 | **Face Detection** | OpenCV Haar Cascade (`haarcascade_frontalface_default.xml`) |
-| **Eye Detection**  | OpenCV Haar Cascade (`haarcascade_eye.xml`) |
-| **Drowsiness**     | Eye Aspect Ratio (EAR) — geometric algorithm |
-| **Emotion**        | DeepFace (pre-trained VGG-Face / FER2013 model) |
-| **Attention %**    | `Attentive Frames / Total Frames × 100` |
+| **Eye Detection** | OpenCV Haar Cascade (`haarcascade_eye.xml`) |
+| **Drowsiness** | Eye Aspect Ratio (EAR) — geometric algorithm |
+| **Emotion** | DeepFace (pre-trained VGG-Face / FER2013 model) |
+| **Attention %** | `Attentive Frames / Total Frames × 100` |
 
 ### Eye Aspect Ratio (EAR)
-```
+
+```text
 EAR = (vertical height) / (2 × horizontal width)
-If EAR < 0.25 for 20+ consecutive frames → DROWSY ALERT
+
+If EAR < 0.25 for 20+ consecutive frames → Drowsy Alert
 ```
 
 ---
 
-## 📊 Dashboard Pages
+## Dashboard Pages
 
 | Page | URL | Description |
 |------|-----|-------------|
 | Login | `/` | Authentication |
 | Dashboard | `/dashboard` | Live webcam feed + real-time stats |
 | Analytics | `/analytics` | Charts, emotion breakdown, student table |
-| Reports | `/reports` | History log, CSV export |
+| Reports | `/reports` | Session history & CSV export |
 
 ---
 
-## 🔌 API Endpoints
+## API Endpoints
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
@@ -99,18 +102,19 @@ If EAR < 0.25 for 20+ consecutive frames → DROWSY ALERT
 
 ---
 
-## ⚙️ Configuration
+## Configuration
 
 Edit `attention_detector.py` to tune:
+
 ```python
-EAR_THRESHOLD    = 0.25   # EAR below this → eyes closed
-EAR_CONSEC_FRAMES = 20   # frames before drowsy alert
-ATTENTION_WINDOW = 100   # rolling window size
+EAR_THRESHOLD = 0.25      # EAR below this → eyes closed
+EAR_CONSEC_FRAMES = 20    # Frames before drowsy alert
+ATTENTION_WINDOW = 100     # Rolling window size
 ```
 
 ---
 
-## 🛠 Tech Stack
+## Tech Stack
 
 - **Python 3.x**
 - **Flask 3.x** — Web server
@@ -118,12 +122,12 @@ ATTENTION_WINDOW = 100   # rolling window size
 - **DeepFace** — Emotion detection (wraps FER2013 CNN)
 - **SciPy** — EAR distance calculations
 - **Chart.js** — Analytics charts (CDN)
-- **HTML5/CSS3/JS** — Dark purple dashboard UI
+- **HTML5/CSS3/JavaScript** — Dark purple dashboard UI
 
 ---
 
-## 📝 Notes
+## Notes
 
-- The app uses your **default webcam** (index 0). If you have multiple cameras, change `cv2.VideoCapture(0)` in `app.py`.
-- DeepFace downloads pre-trained weights on **first run** (~1 GB). Allow internet access.
-- For offline use, the app falls back to **brightness-based** emotion heuristics automatically.
+- The app uses your **default webcam** (index `0`). If you have multiple cameras, change `cv2.VideoCapture(0)` in `app.py`.
+- DeepFace downloads pre-trained weights on the **first run** (~1 GB). Allow internet access.
+- For offline use, the app automatically falls back to **brightness-based emotion heuristics** if DeepFace is unavailable.
